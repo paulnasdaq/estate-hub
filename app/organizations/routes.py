@@ -5,8 +5,9 @@ from app.core.database import get_db
 from app.core.pagination import PaginationParams
 from app.core.schemas import Page
 
-from . import models, schemas, services
+from . import models, schemas
 from .dependencies import get_organization_or_404
+from .services import OrganizationService
 
 router = APIRouter(prefix="/organizations", tags=["organizations"])
 
@@ -16,7 +17,7 @@ def list_organizations(
     pagination: PaginationParams = Depends(),
     db: Session = Depends(get_db),
 ) -> Page[schemas.OrganizationRead]:
-    items, total = services.list_organizations(db, pagination.limit, pagination.offset)
+    items, total = OrganizationService(db).list(pagination.limit, pagination.offset)
     return Page(
         items=items,
         total=total,
@@ -31,7 +32,7 @@ def list_organizations(
 def create_organization(
     payload: schemas.OrganizationCreate, db: Session = Depends(get_db)
 ):
-    return services.create_organization(db, payload)
+    return OrganizationService(db).create(payload)
 
 
 @router.get("/{org_id}", response_model=schemas.OrganizationRead)
@@ -47,7 +48,7 @@ def update_organization(
     org: models.Organization = Depends(get_organization_or_404),
     db: Session = Depends(get_db),
 ):
-    return services.update_organization(db, org, payload)
+    return OrganizationService(db).update(org, payload)
 
 
 @router.delete("/{org_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -55,5 +56,5 @@ def delete_organization(
     org: models.Organization = Depends(get_organization_or_404),
     db: Session = Depends(get_db),
 ) -> Response:
-    services.delete_organization(db, org)
+    OrganizationService(db).delete(org)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

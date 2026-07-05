@@ -4,4 +4,6 @@ Alembic's autogenerate and any create_all rely on all models being imported.
 Add each new feature's models module here.
 """
 
+from app.auth import models as auth_models  # noqa: F401
 from app.organizations import models as organizations_models  # noqa: F401
+from app.properties import models as properties_models  # noqa: F401
