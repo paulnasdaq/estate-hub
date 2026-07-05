@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app import registry  # noqa: F401  (registers all feature models/mappers)
 from app.api import api_router
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
