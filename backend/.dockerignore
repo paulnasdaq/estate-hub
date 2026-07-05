@@ -1,0 +1,22 @@
+# Virtual environments (rebuilt inside the image)
+.venv
+
+# Python caches
+__pycache__/
+*.py[oc]
+.pytest_cache/
+.ruff_cache/
+
+# Local SQLite databases
+*.db
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# VCS & docker meta (build context is ./backend, but be explicit)
+.git
+.gitignore
+Dockerfile
+.dockerignore
