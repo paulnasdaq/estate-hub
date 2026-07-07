@@ -44,6 +44,10 @@ describe("PropertyForm", () => {
       lat: 30.27,
       lng: -97.74,
     });
+    // onCreated receives the created property so the caller can navigate to it.
+    expect(onCreated).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "new-id", name: "Birchwood Flats" }),
+    );
   });
 
   test("blocks submit and shows validation errors when empty", async () => {

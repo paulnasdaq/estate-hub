@@ -5,11 +5,12 @@ import { renderWithRouter, screen } from "@/test/test-utils";
 import { server } from "@/test/msw/server";
 import { PropertiesPage } from "./components/properties-page";
 
-// PropertiesPage links to /properties/new, so it needs a router in tests.
+// PropertiesPage links to the create page and each row links to its details,
+// so it needs those routes registered in the test router.
 const renderPage = () =>
   renderWithRouter(<PropertiesPage />, {
     initialPath: "/properties",
-    linkPaths: ["/properties/new"],
+    linkPaths: ["/properties/new", "/properties/$propertyId"],
   });
 
 describe("PropertiesPage", () => {

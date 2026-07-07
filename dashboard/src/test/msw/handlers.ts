@@ -31,6 +31,15 @@ export const handlers = [
     }),
   ),
 
+  http.post("/api/v1/organizations", async ({ request, response }) => {
+    const body = await request.json();
+    return response(201).json({
+      id: "44444444-4444-4444-4444-444444444444",
+      created_at: now,
+      ...body,
+    });
+  }),
+
   http.get("/api/v1/properties", ({ response }) =>
     response(200).json({
       items: [
@@ -46,6 +55,17 @@ export const handlers = [
       total: 1,
       limit: 50,
       offset: 0,
+    }),
+  ),
+
+  http.get("/api/v1/properties/{property_id}", ({ params, response }) =>
+    response(200).json({
+      id: params.property_id,
+      created_at: now,
+      name: "Maple Court",
+      lat: 45.52,
+      lng: -122.68,
+      organization_id: SAMPLE_ORG_ID,
     }),
   ),
 

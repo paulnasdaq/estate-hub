@@ -2,10 +2,10 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 
 import { PropertyForm } from "./property-form";
+import type { Property } from "../types";
 
 export function NewPropertyPage() {
   const navigate = useNavigate();
-  const goToList = () => navigate({ to: "/properties" });
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
@@ -20,7 +20,15 @@ export function NewPropertyPage() {
         <h1 className="text-2xl font-semibold tracking-tight">New property</h1>
       </div>
 
-      <PropertyForm onCreated={goToList} onCancel={goToList} />
+      <PropertyForm
+        onCreated={(property: Property) =>
+          navigate({
+            to: "/properties/$propertyId",
+            params: { propertyId: property.id },
+          })
+        }
+        onCancel={() => navigate({ to: "/properties" })}
+      />
     </div>
   );
 }

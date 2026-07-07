@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import {
   createColumnHelper,
   flexRender,
@@ -9,28 +8,19 @@ import {
 } from "@tanstack/react-table";
 import { useState } from "react";
 
-import type { Property } from "../types";
+import type { Organization } from "../types";
 
-const columnHelper = createColumnHelper<Property>();
+const columnHelper = createColumnHelper<Organization>();
 
 const columns = [
-  columnHelper.accessor("name", {
-    header: "Name",
-    cell: (info) => (
-      <Link
-        to="/properties/$propertyId"
-        params={{ propertyId: info.row.original.id }}
-        className="font-medium text-primary hover:underline"
-      >
-        {info.getValue()}
-      </Link>
-    ),
+  columnHelper.accessor("name", { header: "Name" }),
+  columnHelper.accessor("created_at", {
+    header: "Created",
+    cell: (info) => new Date(info.getValue()).toLocaleDateString(),
   }),
-  columnHelper.accessor("lat", { header: "Latitude" }),
-  columnHelper.accessor("lng", { header: "Longitude" }),
 ];
 
-export function PropertyTable({ data }: { data: Property[] }) {
+export function OrganizationTable({ data }: { data: Organization[] }) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const table = useReactTable({

@@ -2,7 +2,15 @@ import { createRouter } from "@tanstack/react-router";
 
 import { rootRoute } from "./routes";
 import { dashboardIndexRoute } from "@/features/dashboard";
-import { propertiesRoute, newPropertyRoute } from "@/features/properties";
+import {
+  propertiesRoute,
+  newPropertyRoute,
+  propertyDetailsRoute,
+} from "@/features/properties";
+import {
+  organizationsRoute,
+  newOrganizationRoute,
+} from "@/features/organizations";
 
 // Aggregate every feature's routes under the root (mirrors backend app/api.py).
 // Each feature owns its route definitions and exposes them through its barrel.
@@ -10,6 +18,9 @@ const routeTree = rootRoute.addChildren([
   dashboardIndexRoute,
   propertiesRoute,
   newPropertyRoute,
+  propertyDetailsRoute,
+  organizationsRoute,
+  newOrganizationRoute,
 ]);
 
 export const router = createRouter({ routeTree });

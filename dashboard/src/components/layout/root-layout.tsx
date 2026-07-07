@@ -1,6 +1,6 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import { Building2, Home, LayoutDashboard } from "lucide-react";
+import { Building2, Home, LayoutDashboard, Network } from "lucide-react";
 
 import { Separator } from "@/components/ui/separator";
 import {
@@ -21,6 +21,12 @@ import {
 const navItems = [
   { title: "Home", to: "/", icon: Home, exact: true },
   { title: "Properties", to: "/properties", icon: Building2, exact: false },
+  {
+    title: "Organizations",
+    to: "/organizations",
+    icon: Network,
+    exact: false,
+  },
 ] as const;
 
 export function RootLayout() {

@@ -23,15 +23,17 @@ import {
 } from "@/components/ui/select";
 import { useCreateProperty } from "../api/properties.queries";
 import { propertyFormSchema, type PropertyFormValues } from "../schemas";
+import type { Property } from "../types";
 
 // Presentational + mutation logic only. The parent decides what happens after a
-// successful create (e.g. navigate back to the list) via `onCreated`, which
-// keeps this component testable without a router.
+// successful create (e.g. navigate to the new property's details) via
+// `onCreated`, which receives the created property and keeps this component
+// testable without a router.
 export function PropertyForm({
   onCreated,
   onCancel,
 }: {
-  onCreated: () => void;
+  onCreated: (property: Property) => void;
   onCancel?: () => void;
 }) {
   const organizations = useOrganizations();
@@ -44,14 +46,14 @@ export function PropertyForm({
 
   async function onSubmit(values: PropertyFormValues) {
     try {
-      await createProperty.mutateAsync({
+      const property = await createProperty.mutateAsync({
         name: values.name,
         organization_id: values.organization_id,
         lat: Number(values.lat),
         lng: Number(values.lng),
       });
       toast.success("Property created");
-      onCreated();
+      onCreated(property);
     } catch (error) {
       toast.error(getErrorMessage(error));
     }

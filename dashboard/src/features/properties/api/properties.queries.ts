@@ -20,10 +20,25 @@ export const propertyQueries = {
       // The list endpoint is paginated: { items, total, limit, offset }.
       queryFn: () => unwrap(api.GET("/api/v1/properties")),
     }),
+
+  detail: (propertyId: string) =>
+    queryOptions({
+      queryKey: [...propertyQueries.all, "detail", propertyId],
+      queryFn: () =>
+        unwrap(
+          api.GET("/api/v1/properties/{property_id}", {
+            params: { path: { property_id: propertyId } },
+          }),
+        ),
+    }),
 };
 
 export function useProperties() {
   return useQuery(propertyQueries.list());
+}
+
+export function useProperty(propertyId: string) {
+  return useQuery(propertyQueries.detail(propertyId));
 }
 
 export function useCreateProperty() {
