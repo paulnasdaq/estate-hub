@@ -1,3 +1,8 @@
+# Defer annotation evaluation so return hints like `list[models.Unit]` are not
+# resolved against the class namespace, where the `list` method would otherwise
+# shadow the builtin.
+from __future__ import annotations
+
 import uuid
 
 from sqlalchemy import func, select
@@ -21,16 +26,54 @@ class UnitService:
             raise UnitNotFoundError(unit_id)
         return unit
 
-    def list(self, limit: int, offset: int) -> tuple[list[models.Unit], int]:
-        """Return a page of active units and the total active count."""
-        active = models.Unit.deleted_at.is_(None)
+    def list(
+        self, limit: int, offset: int, search: str | None = None
+    ) -> tuple[list[models.Unit], int]:
+        """Return a page of active units and the matching total count.
+
+        ``search`` filters on a case-insensitive unit-name substring.
+        """
+        filters = [models.Unit.deleted_at.is_(None)]
+        if search:
+            filters.append(models.Unit.name.ilike(f"%{search}%"))
         total = self.db.scalar(
-            select(func.count()).select_from(models.Unit).where(active)
+            select(func.count()).select_from(models.Unit).where(*filters)
         )
         items = list(
             self.db.scalars(
                 select(models.Unit)
-                .where(active)
+                .where(*filters)
+                .order_by(models.Unit.created_at)
+                .limit(limit)
+                .offset(offset)
+            )
+        )
+        return items, total or 0
+
+    def list_for_property(
+        self,
+        property_id: uuid.UUID,
+        limit: int,
+        offset: int,
+        search: str | None = None,
+    ) -> tuple[list[models.Unit], int]:
+        """Return a page of active units under a property and the total count.
+
+        ``search`` filters on a case-insensitive unit-name substring.
+        """
+        filters = [
+            models.Unit.deleted_at.is_(None),
+            models.Unit.property_id == property_id,
+        ]
+        if search:
+            filters.append(models.Unit.name.ilike(f"%{search}%"))
+        total = self.db.scalar(
+            select(func.count()).select_from(models.Unit).where(*filters)
+        )
+        items = list(
+            self.db.scalars(
+                select(models.Unit)
+                .where(*filters)
                 .order_by(models.Unit.created_at)
                 .limit(limit)
                 .offset(offset)

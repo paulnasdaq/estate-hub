@@ -4,3 +4,7 @@ import type { components } from "@/core/api/schema";
 // backend (regenerate with `npm run gen:api`).
 export type Property = components["schemas"]["PropertyRead"];
 export type PropertyCreate = components["schemas"]["PropertyCreate"];
+
+// Units are always scoped to a property (see the nested API routes).
+export type Unit = components["schemas"]["UnitRead"];
+export type UnitCreateNested = components["schemas"]["UnitCreateNested"];

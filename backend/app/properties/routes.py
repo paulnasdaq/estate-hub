@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -6,7 +6,7 @@ from app.core.pagination import PaginationParams
 from app.core.schemas import Page
 
 from . import models, schemas
-from .dependencies import get_property_or_404, get_unit_or_404
+from .dependencies import PropertyFilters, get_property_or_404, get_unit_or_404
 from .services import PropertyService, UnitService
 
 property_router = APIRouter(prefix="/properties", tags=["properties"])
@@ -16,9 +16,16 @@ unit_router = APIRouter(prefix="/units", tags=["units"])
 @property_router.get("", response_model=Page[schemas.PropertyRead])
 def list_properties(
     pagination: PaginationParams = Depends(),
+    filters: PropertyFilters = Depends(),
     db: Session = Depends(get_db),
 ) -> Page[schemas.PropertyRead]:
-    items, total = PropertyService(db).list(pagination.limit, pagination.offset)
+    items, total = PropertyService(db).list(
+        pagination.limit,
+        pagination.offset,
+        search=filters.search,
+        organization_id=filters.organization_id,
+        bbox=filters.bbox,
+    )
     return Page(
         items=items,
         total=total,
@@ -59,12 +66,56 @@ def delete_property(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+@property_router.get(
+    "/{property_id}/units", response_model=Page[schemas.UnitRead]
+)
+def list_property_units(
+    pagination: PaginationParams = Depends(),
+    search: str | None = Query(
+        None, description="Case-insensitive match on the unit name"
+    ),
+    prop: models.Property = Depends(get_property_or_404),
+    db: Session = Depends(get_db),
+) -> Page[schemas.UnitRead]:
+    items, total = UnitService(db).list_for_property(
+        prop.id, pagination.limit, pagination.offset, search=search
+    )
+    return Page(
+        items=items,
+        total=total,
+        limit=pagination.limit,
+        offset=pagination.offset,
+    )
+
+
+@property_router.post(
+    "/{property_id}/units",
+    response_model=schemas.UnitRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_property_unit(
+    payload: schemas.UnitCreateNested,
+    prop: models.Property = Depends(get_property_or_404),
+    db: Session = Depends(get_db),
+):
+    # The property comes from the path (validated by the dependency); the body
+    # only carries the unit's own fields.
+    return UnitService(db).create(
+        schemas.UnitCreate(name=payload.name, property_id=prop.id)
+    )
+
+
 @unit_router.get("", response_model=Page[schemas.UnitRead])
 def list_units(
     pagination: PaginationParams = Depends(),
+    search: str | None = Query(
+        None, description="Case-insensitive match on the unit name"
+    ),
     db: Session = Depends(get_db),
 ) -> Page[schemas.UnitRead]:
-    items, total = UnitService(db).list(pagination.limit, pagination.offset)
+    items, total = UnitService(db).list(
+        pagination.limit, pagination.offset, search=search
+    )
     return Page(
         items=items,
         total=total,

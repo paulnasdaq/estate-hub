@@ -14,11 +14,19 @@ import type { PropertyCreate } from "../types";
 export const propertyQueries = {
   all: ["properties"] as const,
 
-  list: () =>
+  list: (params: { search?: string } = {}) =>
     queryOptions({
-      queryKey: [...propertyQueries.all, "list"],
+      // Search is part of the key so each term caches separately.
+      queryKey: [...propertyQueries.all, "list", params],
       // The list endpoint is paginated: { items, total, limit, offset }.
-      queryFn: () => unwrap(api.GET("/api/v1/properties")),
+      queryFn: () =>
+        unwrap(
+          api.GET("/api/v1/properties", {
+            params: {
+              query: params.search ? { search: params.search } : {},
+            },
+          }),
+        ),
     }),
 
   detail: (propertyId: string) =>
@@ -33,8 +41,13 @@ export const propertyQueries = {
     }),
 };
 
-export function useProperties() {
-  return useQuery(propertyQueries.list());
+export function useProperties(params: { search?: string } = {}) {
+  return useQuery({
+    ...propertyQueries.list(params),
+    // Keep the previous page's rows visible while a new search resolves, so the
+    // table doesn't flash empty on every keystroke.
+    placeholderData: (previous) => previous,
+  });
 }
 
 export function useProperty(propertyId: string) {

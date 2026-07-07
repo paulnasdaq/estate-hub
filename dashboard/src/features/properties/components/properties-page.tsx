@@ -1,13 +1,20 @@
 import { Link } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
+import { useState } from "react";
 
 import { getErrorMessage } from "@/core/errors";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useProperties } from "../api/properties.queries";
 import { PropertyTable } from "./property-table";
 
 export function PropertiesPage() {
-  const { data, isPending, isError, error } = useProperties();
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search.trim());
+  const { data, isPending, isError, error } = useProperties({
+    search: debouncedSearch || undefined,
+  });
 
   return (
     <div className="space-y-4">
@@ -21,13 +28,34 @@ export function PropertiesPage() {
         </Button>
       </div>
 
+      <div className="relative max-w-sm">
+        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          type="search"
+          placeholder="Search properties by name…"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          aria-label="Search properties by name"
+          className="pl-9"
+        />
+      </div>
+
       {isPending && (
         <p className="text-sm text-muted-foreground">Loading properties…</p>
       )}
       {isError && (
         <p className="text-sm text-destructive">{getErrorMessage(error)}</p>
       )}
-      {data && <PropertyTable data={data.items} />}
+      {data &&
+        (data.items.length > 0 ? (
+          <PropertyTable data={data.items} />
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            {debouncedSearch
+              ? `No properties match “${debouncedSearch}”.`
+              : "No properties yet."}
+          </p>
+        ))}
     </div>
   );
 }

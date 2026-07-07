@@ -1,8 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, DoorOpen } from "lucide-react";
 
 import { getErrorMessage } from "@/core/errors";
 import { useOrganizations } from "@/features/organizations";
+import { Button } from "@/components/ui/button";
 import { useProperty } from "../api/properties.queries";
 
 // A single labelled field in the details grid.
@@ -27,17 +28,25 @@ export function PropertyDetailsPage({ propertyId }: { propertyId: string }) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div className="space-y-1">
-        <Link
-          to="/properties"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" />
-          Back to properties
-        </Link>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {property?.name ?? "Property"}
-        </h1>
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1">
+          <Link
+            to="/properties"
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" />
+            Back to properties
+          </Link>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {property?.name ?? "Property"}
+          </h1>
+        </div>
+        <Button asChild variant="outline" size="sm">
+          <Link to="/properties/$propertyId/units" params={{ propertyId }}>
+            <DoorOpen />
+            Units
+          </Link>
+        </Button>
       </div>
 
       {isPending && (

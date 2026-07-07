@@ -7,11 +7,12 @@ import { PropertyDetailsPage } from "./components/property-details-page";
 
 const PROPERTY_ID = "22222222-2222-2222-2222-222222222222";
 
-// PropertyDetailsPage links back to /properties, so it needs a router.
+// PropertyDetailsPage links back to /properties and to the property's units
+// page, so both routes need registering in the test router.
 const renderPage = () =>
   renderWithRouter(<PropertyDetailsPage propertyId={PROPERTY_ID} />, {
     initialPath: "/properties/details",
-    linkPaths: ["/properties"],
+    linkPaths: ["/properties", "/properties/$propertyId/units"],
   });
 
 describe("PropertyDetailsPage", () => {
@@ -24,6 +25,16 @@ describe("PropertyDetailsPage", () => {
     expect(screen.getAllByText("Maple Court").length).toBeGreaterThan(0);
     expect(screen.getByText("45.52")).toBeInTheDocument();
     expect(screen.getByText("-122.68")).toBeInTheDocument();
+  });
+
+  test("links to the property's units page", async () => {
+    renderPage();
+
+    const unitsLink = await screen.findByRole("link", { name: /units/i });
+    expect(unitsLink).toHaveAttribute(
+      "href",
+      `/properties/${PROPERTY_ID}/units`,
+    );
   });
 
   test("shows an error message when the request fails", async () => {

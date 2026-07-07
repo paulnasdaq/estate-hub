@@ -21,16 +21,37 @@ class PropertyService:
             raise PropertyNotFoundError(property_id)
         return prop
 
-    def list(self, limit: int, offset: int) -> tuple[list[models.Property], int]:
-        """Return a page of active properties and the total active count."""
-        active = models.Property.deleted_at.is_(None)
+    def list(
+        self,
+        limit: int,
+        offset: int,
+        search: str | None = None,
+        organization_id: uuid.UUID | None = None,
+        bbox: tuple[float, float, float, float] | None = None,
+    ) -> tuple[list[models.Property], int]:
+        """Return a page of active properties and the matching total count.
+
+        Optional filters: ``search`` (case-insensitive name substring),
+        ``organization_id`` (exact), and ``bbox`` as
+        ``(min_lat, min_lng, max_lat, max_lng)`` for a radius/box search.
+        """
+        filters = [models.Property.deleted_at.is_(None)]
+        if search:
+            filters.append(models.Property.name.ilike(f"%{search}%"))
+        if organization_id is not None:
+            filters.append(models.Property.organization_id == organization_id)
+        if bbox is not None:
+            min_lat, min_lng, max_lat, max_lng = bbox
+            filters.append(models.Property.lat.between(min_lat, max_lat))
+            filters.append(models.Property.lng.between(min_lng, max_lng))
+
         total = self.db.scalar(
-            select(func.count()).select_from(models.Property).where(active)
+            select(func.count()).select_from(models.Property).where(*filters)
         )
         items = list(
             self.db.scalars(
                 select(models.Property)
-                .where(active)
+                .where(*filters)
                 .order_by(models.Property.created_at)
                 .limit(limit)
                 .offset(offset)

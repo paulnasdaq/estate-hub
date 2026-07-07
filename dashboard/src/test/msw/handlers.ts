@@ -77,4 +77,35 @@ export const handlers = [
       ...body,
     });
   }),
+
+  http.get(
+    "/api/v1/properties/{property_id}/units",
+    ({ params, response }) =>
+      response(200).json({
+        items: [
+          {
+            id: "55555555-5555-5555-5555-555555555555",
+            created_at: now,
+            name: "Unit 1",
+            property_id: params.property_id,
+          },
+        ],
+        total: 1,
+        limit: 50,
+        offset: 0,
+      }),
+  ),
+
+  http.post(
+    "/api/v1/properties/{property_id}/units",
+    async ({ params, request, response }) => {
+      const body = await request.json();
+      return response(201).json({
+        id: "66666666-6666-6666-6666-666666666666",
+        created_at: now,
+        property_id: params.property_id,
+        ...body,
+      });
+    },
+  ),
 ];

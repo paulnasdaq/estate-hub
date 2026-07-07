@@ -78,6 +78,24 @@ export interface paths {
         patch: operations["update_property_api_v1_properties__property_id__patch"];
         trace?: never;
     };
+    "/api/v1/properties/{property_id}/units": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Property Units */
+        get: operations["list_property_units_api_v1_properties__property_id__units_get"];
+        put?: never;
+        /** Create Property Unit */
+        post: operations["create_property_unit_api_v1_properties__property_id__units_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/units": {
         parameters: {
             query?: never;
@@ -373,6 +391,11 @@ export interface components {
              */
             property_id: string;
         };
+        /** UnitCreateNested */
+        UnitCreateNested: {
+            /** Name */
+            name: string;
+        };
         /** UnitRead */
         UnitRead: {
             /**
@@ -589,6 +612,16 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
+                /** @description Case-insensitive match on the property name */
+                search?: string | null;
+                /** @description Restrict to a single organization */
+                organization_id?: string | null;
+                /** @description Center latitude for a radius search */
+                lat?: number | null;
+                /** @description Center longitude for a radius search */
+                lng?: number | null;
+                /** @description Search radius in km; requires lat and lng */
+                radius_km?: number | null;
             };
             header?: never;
             path?: never;
@@ -744,9 +777,82 @@ export interface operations {
             };
         };
     };
+    list_property_units_api_v1_properties__property_id__units_get: {
+        parameters: {
+            query?: {
+                /** @description Case-insensitive match on the unit name */
+                search?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                property_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_UnitRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_property_unit_api_v1_properties__property_id__units_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                property_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnitCreateNested"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_units_api_v1_units_get: {
         parameters: {
             query?: {
+                /** @description Case-insensitive match on the unit name */
+                search?: string | null;
                 limit?: number;
                 offset?: number;
             };

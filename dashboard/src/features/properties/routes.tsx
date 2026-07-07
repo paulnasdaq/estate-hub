@@ -4,6 +4,7 @@ import { rootRoute } from "@/app/routes";
 import { PropertiesPage } from "./components/properties-page";
 import { NewPropertyPage } from "./components/new-property-page";
 import { PropertyDetailsPage } from "./components/property-details-page";
+import { PropertyUnitsPage } from "./components/property-units-page";
 
 // This feature's routes — mirrors the backend's properties/routes.py.
 export const propertiesRoute = createRoute({
@@ -29,4 +30,15 @@ export const propertyDetailsRoute = createRoute({
 function PropertyDetailsRouteComponent() {
   const { propertyId } = propertyDetailsRoute.useParams();
   return <PropertyDetailsPage propertyId={propertyId} />;
+}
+
+export const propertyUnitsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/properties/$propertyId/units",
+  component: PropertyUnitsRouteComponent,
+});
+
+function PropertyUnitsRouteComponent() {
+  const { propertyId } = propertyUnitsRoute.useParams();
+  return <PropertyUnitsPage propertyId={propertyId} />;
 }
