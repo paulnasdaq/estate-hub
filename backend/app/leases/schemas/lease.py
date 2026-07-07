@@ -13,6 +13,14 @@ class LeaseCreate(BaseModel):
     terminated_on: datetime | None = None
 
 
+class LeaseUpdate(BaseModel):
+    # All fields optional for partial updates (PATCH).
+    unit_id: uuid.UUID | None = None
+    account_id: uuid.UUID | None = None
+    effective_from: datetime | None = None
+    terminated_on: datetime | None = None
+
+
 class LeaseRead(TimestampedRead):
     unit_id: uuid.UUID
     account_id: uuid.UUID

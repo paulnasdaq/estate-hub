@@ -1,6 +1,14 @@
 import uuid
 
-from app.core.exceptions import ConflictError
+from app.core.exceptions import ConflictError, NotFoundError
+
+
+class LeaseNotFoundError(NotFoundError):
+    """Raised when an active lease cannot be found."""
+
+    def __init__(self, lease_id: uuid.UUID) -> None:
+        self.lease_id = lease_id
+        super().__init__(f"Lease {lease_id} not found")
 
 
 class UnitAlreadyLeasedError(ConflictError):
