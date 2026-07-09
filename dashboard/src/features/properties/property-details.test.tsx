@@ -21,8 +21,13 @@ describe("PropertyDetailsPage", () => {
     renderPage();
 
     expect(await screen.findByText("Acme Properties")).toBeInTheDocument();
-    // The name appears in both the heading and the details grid.
+    // The name appears in both the heading and the Overview grid.
     expect(screen.getAllByText("Maple Court").length).toBeGreaterThan(0);
+    // The three sections are present.
+    expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Address" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Media" })).toBeInTheDocument();
+    // The Address section lists the coordinates.
     expect(screen.getByText("45.52")).toBeInTheDocument();
     expect(screen.getByText("-122.68")).toBeInTheDocument();
   });

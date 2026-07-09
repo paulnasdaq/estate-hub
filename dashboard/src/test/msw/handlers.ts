@@ -87,6 +87,7 @@ export const handlers = [
             id: "55555555-5555-5555-5555-555555555555",
             created_at: now,
             name: "Unit 1",
+            price: 1200,
             property_id: params.property_id,
           },
         ],
@@ -108,4 +109,33 @@ export const handlers = [
       });
     },
   ),
+
+  http.get(
+    "/api/v1/properties/{property_id}/media",
+    ({ response }) =>
+      response(200).json({ items: [], total: 0, limit: 50, offset: 0 }),
+  ),
+
+  http.post(
+    "/api/v1/properties/{property_id}/media/presigns",
+    async ({ params, request, response }) => {
+      const body = await request.json();
+      return response(200).json({
+        storage_key: `properties/${params.property_id}/files/${body.filename}`,
+        // Absolute so the raw PUT is interceptable in jsdom; tests that assert
+        // the upload override this handler and add a matching PUT handler.
+        upload_url: `http://s3.test/upload/${params.property_id}/${body.filename}`,
+      });
+    },
+  ),
+
+  http.post("/api/v1/media", async ({ request, response }) => {
+    const body = await request.json();
+    return response(201).json({
+      id: "77777777-7777-7777-7777-777777777777",
+      created_at: now,
+      deleted_at: null,
+      ...body,
+    });
+  }),
 ];
