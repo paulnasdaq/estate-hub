@@ -11,7 +11,7 @@ EFFECTIVE_FROM = "2026-08-01T00:00:00Z"
 
 
 def _unit(db: Session, name: str = "Apt 1") -> str:
-    unit = Unit(name=name, property_id=uuid.uuid4())
+    unit = Unit(name=name, price=1200, property_id=uuid.uuid4())
     db.add(unit)
     db.commit()
     return str(unit.id)

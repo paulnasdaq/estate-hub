@@ -12,6 +12,9 @@ class Unit(Base):
     __tablename__ = "units"
 
     name: Mapped[str] = mapped_column(index=True)
+    # Rent/price for the unit, stored as a whole integer (mirrors how lease
+    # amounts are modelled).
+    price: Mapped[int]
     property_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("properties.id"), index=True
     )
