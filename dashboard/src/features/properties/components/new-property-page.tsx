@@ -21,7 +21,7 @@ export function NewPropertyPage() {
       </div>
 
       <PropertyForm
-        onCreated={(property: Property) =>
+        onSaved={(property: Property) =>
           navigate({
             to: "/properties/$propertyId",
             params: { propertyId: property.id },

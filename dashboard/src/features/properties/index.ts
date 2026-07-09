@@ -4,12 +4,14 @@ export {
   propertiesRoute,
   newPropertyRoute,
   propertyDetailsRoute,
+  propertyEditRoute,
   propertyUnitsRoute,
 } from "./routes";
 export { PropertiesPage } from "./components/properties-page";
 export { NewPropertyPage } from "./components/new-property-page";
 export { PropertyForm } from "./components/property-form";
 export { PropertyDetailsPage } from "./components/property-details-page";
+export { EditPropertyPage } from "./components/edit-property-page";
 export { PropertyUnits } from "./components/property-units";
 export { PropertyUnitsPage } from "./components/property-units-page";
 export {

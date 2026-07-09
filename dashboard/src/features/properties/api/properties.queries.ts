@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-query";
 
 import { api, unwrap } from "@/core/api/client";
-import type { PropertyCreate } from "../types";
+import type { PropertyCreate, PropertyUpdate } from "../types";
 
 // Data access for the properties feature (the client-side analog of the
 // backend's services/property_service.py). Centralizing queryOptions here keeps
@@ -62,6 +62,45 @@ export function useCreateProperty() {
     // Refetch the list so the new property shows up (simple + correct;
     // optimistic insertion is a later optimization).
     onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: propertyQueries.all });
+    },
+  });
+}
+
+export function useUpdateProperty(propertyId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: PropertyUpdate) =>
+      unwrap(
+        api.PATCH("/api/v1/properties/{property_id}", {
+          params: { path: { property_id: propertyId } },
+          body,
+        }),
+      ),
+    // `all` is the prefix for both the list and this property's detail, so a
+    // single invalidation refetches every affected query.
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: propertyQueries.all });
+    },
+  });
+}
+
+export function useDeleteProperty() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    // DELETE returns 204 with no body, so `unwrap` (which requires data) can't
+    // be used; surface any API error and resolve to void otherwise.
+    mutationFn: async (propertyId: string) => {
+      const { error } = await api.DELETE("/api/v1/properties/{property_id}", {
+        params: { path: { property_id: propertyId } },
+      });
+      if (error !== undefined) throw error;
+    },
+    onSuccess: (_data, propertyId) => {
+      // Drop the now-gone property's detail cache, then refetch the list.
+      queryClient.removeQueries({
+        queryKey: propertyQueries.detail(propertyId).queryKey,
+      });
       void queryClient.invalidateQueries({ queryKey: propertyQueries.all });
     },
   });
