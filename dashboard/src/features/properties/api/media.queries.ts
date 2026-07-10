@@ -10,30 +10,80 @@ import type { Media } from "../types";
 // How many media tiles a single grid page holds.
 export const MEDIA_PAGE_SIZE = 12;
 
-// Query definitions for a property's media, keyed under the property so
-// uploads/deletes can invalidate a single property's list.
+// The entities media can attach to. Mirrors the backend's polymorphic media
+// (entity_type on the media row) and its nested list/presign routes.
+export type MediaEntityType = "property" | "unit";
+
+type PageParams = { limit: number; offset: number };
+
+// The typed API client needs literal path strings (and each nested route has
+// its own path-param name), so we switch per entity type. Keeping the switch in
+// one place is what lets the rest of the module stay entity-agnostic.
+function listEntityMedia(
+  entityType: MediaEntityType,
+  entityId: string,
+  params: PageParams,
+) {
+  const query = { limit: params.limit, offset: params.offset };
+  if (entityType === "property") {
+    return unwrap(
+      api.GET("/api/v1/properties/{property_id}/media", {
+        params: { path: { property_id: entityId }, query },
+      }),
+    );
+  }
+  return unwrap(
+    api.GET("/api/v1/units/{unit_id}/media", {
+      params: { path: { unit_id: entityId }, query },
+    }),
+  );
+}
+
+function presignEntityMedia(
+  entityType: MediaEntityType,
+  entityId: string,
+  body: { filename: string; content_type: string },
+) {
+  if (entityType === "property") {
+    return unwrap(
+      api.POST("/api/v1/properties/{property_id}/media/presigns", {
+        params: { path: { property_id: entityId } },
+        body,
+      }),
+    );
+  }
+  return unwrap(
+    api.POST("/api/v1/units/{unit_id}/media/presigns", {
+      params: { path: { unit_id: entityId } },
+      body,
+    }),
+  );
+}
+
+// Query definitions for an entity's media, keyed under the entity type + id so
+// uploads/deletes can invalidate a single entity's list.
 export const mediaQueries = {
   all: ["media"] as const,
 
-  forProperty: (propertyId: string, params: { limit: number; offset: number }) =>
+  forEntity: (
+    entityType: MediaEntityType,
+    entityId: string,
+    params: PageParams,
+  ) =>
     queryOptions({
-      // Pagination is part of the key so each page caches separately.
-      queryKey: [...mediaQueries.all, "property", propertyId, params],
-      queryFn: () =>
-        unwrap(
-          api.GET("/api/v1/properties/{property_id}/media", {
-            params: {
-              path: { property_id: propertyId },
-              query: { limit: params.limit, offset: params.offset },
-            },
-          }),
-        ),
+      // Entity + pagination are part of the key so each page caches separately.
+      queryKey: [...mediaQueries.all, entityType, entityId, params],
+      queryFn: () => listEntityMedia(entityType, entityId, params),
     }),
 };
 
-export function usePropertyMedia(propertyId: string, page: number) {
+export function useEntityMedia(
+  entityType: MediaEntityType,
+  entityId: string,
+  page: number,
+) {
   return useQuery({
-    ...mediaQueries.forProperty(propertyId, {
+    ...mediaQueries.forEntity(entityType, entityId, {
       limit: MEDIA_PAGE_SIZE,
       offset: page * MEDIA_PAGE_SIZE,
     }),
@@ -82,14 +132,15 @@ function putToStorage(
   });
 }
 
-// Upload a single file as media for a property. Three steps, mirroring the
+// Upload a single file as media for an entity. Three steps, mirroring the
 // backend's presign → direct-to-S3 → record flow:
-//   1. Ask the API for a presigned PUT URL (keyed under the property).
+//   1. Ask the API for a presigned PUT URL (keyed under the entity).
 //   2. PUT the bytes straight to S3 (not through our API).
 //   3. Record the media row, which the backend only accepts once the object
 //      actually exists in storage.
-export async function uploadPropertyMedia(
-  propertyId: string,
+export async function uploadMedia(
+  entityType: MediaEntityType,
+  entityId: string,
   file: File,
   options: {
     isPrimary?: boolean;
@@ -100,12 +151,10 @@ export async function uploadPropertyMedia(
 ): Promise<Media> {
   const contentType = contentTypeOf(file);
 
-  const presign = await unwrap(
-    api.POST("/api/v1/properties/{property_id}/media/presigns", {
-      params: { path: { property_id: propertyId } },
-      body: { filename: file.name, content_type: contentType },
-    }),
-  );
+  const presign = await presignEntityMedia(entityType, entityId, {
+    filename: file.name,
+    content_type: contentType,
+  });
 
   // The bytes go straight to the storage backend (not through our API), so this
   // skips our auth middleware and base URL.
@@ -114,8 +163,8 @@ export async function uploadPropertyMedia(
   return unwrap(
     api.POST("/api/v1/media", {
       body: {
-        entity_type: "property",
-        entity_id: propertyId,
+        entity_type: entityType,
+        entity_id: entityId,
         storage_key: presign.storage_key,
         content_type: contentType,
         size_bytes: file.size,

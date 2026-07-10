@@ -22,3 +22,18 @@ export const propertyFormSchema = z.object({
 });
 
 export type PropertyFormValues = z.infer<typeof propertyFormSchema>;
+
+// Form validation for creating a unit (mirrors the backend's UnitCreateNested).
+// Price is kept as a string so the input can be empty ("" reads as "required"
+// rather than coercing to 0); parse with Number() on submit. It must be a
+// whole, non-negative amount.
+export const unitFormSchema = z.object({
+  name: z.string().trim().min(1, "Name is required"),
+  price: z
+    .string()
+    .min(1, "Price is required")
+    .refine((v) => Number.isInteger(Number(v)), "Price must be a whole number")
+    .refine((v) => Number(v) >= 0, "Price can't be negative"),
+});
+
+export type UnitFormValues = z.infer<typeof unitFormSchema>;

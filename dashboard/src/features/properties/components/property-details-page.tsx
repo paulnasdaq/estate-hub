@@ -7,7 +7,7 @@ import { useOrganizations } from "@/features/organizations";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProperty } from "../api/properties.queries";
-import { PropertyMedia } from "./property-media";
+import { EntityMedia } from "./entity-media";
 
 // Lazy-loaded so the sizeable mapbox-gl bundle is only fetched on this page,
 // not eagerly in the main app chunk.
@@ -115,7 +115,11 @@ export function PropertyDetailsPage({ propertyId }: { propertyId: string }) {
             </Suspense>
           </section>
 
-          <PropertyMedia propertyId={propertyId} />
+          <EntityMedia
+            entityType="property"
+            entityId={propertyId}
+            description="Photos and documents for this property."
+          />
         </>
       )}
     </div>

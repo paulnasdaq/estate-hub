@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -27,11 +27,10 @@ import {
   useCreateProperty,
   useUpdateProperty,
 } from "../api/properties.queries";
-import { uploadPropertyMedia } from "../api/media.queries";
 import { propertyFormSchema, type PropertyFormValues } from "../schemas";
 import type { Property } from "../types";
 import { MediaPicker } from "./media-picker";
-import { fileKey, type MediaUpload } from "./media-upload";
+import { useStagedMedia } from "./use-staged-media";
 
 // Lazy-loaded so the sizeable mapbox-gl bundle stays out of the main app chunk
 // (mirrors PropertyMap on the details page).
@@ -71,12 +70,8 @@ export function PropertyForm({
 
   // Files staged in the media section (create mode only). They can't be
   // uploaded until the property exists, so we hold them and upload after create.
-  const [stagedFiles, setStagedFiles] = useState<File[]>([]);
-  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
-  // Per-file upload state keyed by fileKey(), driving the progress rings in the
-  // picker. Empty while staging; populated once submission starts uploading.
-  const [uploads, setUploads] = useState<Record<string, MediaUpload>>({});
-  const busy = mutation.isPending || isUploadingMedia;
+  const media = useStagedMedia("property");
+  const busy = mutation.isPending || media.isUploading;
 
   const form = useForm<PropertyFormValues>({
     resolver: zodResolver(propertyFormSchema),
@@ -128,47 +123,14 @@ export function PropertyForm({
       // Upload staged media now that the property (and its id) exists. If a
       // file fails, the property still exists, so surface the error but hand
       // control back to the caller rather than trapping the user on the form.
-      if (stagedFiles.length > 0) {
-        setIsUploadingMedia(true);
-        // Mark every file queued so the picker shows a ring on each up front.
-        setUploads(
-          Object.fromEntries(
-            stagedFiles.map((file) => [
-              fileKey(file),
-              { status: "pending", progress: 0 } satisfies MediaUpload,
-            ]),
-          ),
+      try {
+        await media.uploadAll(saved.id);
+      } catch (error) {
+        toast.error(
+          `Property created, but a file failed to upload: ${getErrorMessage(error)}`,
         );
-        try {
-          // Upload in order; the first file becomes the property's primary
-          // (cover) media.
-          for (const [index, file] of stagedFiles.entries()) {
-            const key = fileKey(file);
-            const setState = (state: MediaUpload) =>
-              setUploads((prev) => ({ ...prev, [key]: state }));
-            setState({ status: "uploading", progress: 0 });
-            try {
-              await uploadPropertyMedia(saved.id, file, {
-                isPrimary: index === 0,
-                displayOrder: index,
-                onProgress: (fraction) =>
-                  setState({ status: "uploading", progress: fraction }),
-              });
-              setState({ status: "done", progress: 1 });
-            } catch (error) {
-              setState({ status: "error", progress: 0 });
-              throw error;
-            }
-          }
-        } catch (error) {
-          toast.error(
-            `Property created, but a file failed to upload: ${getErrorMessage(error)}`,
-          );
-          onSaved(saved);
-          return;
-        } finally {
-          setIsUploadingMedia(false);
-        }
+        onSaved(saved);
+        return;
       }
 
       toast.success("Property created");
@@ -250,10 +212,10 @@ export function PropertyForm({
           <div className="space-y-2">
             <FormLabel>Media</FormLabel>
             <MediaPicker
-              files={stagedFiles}
-              onChange={setStagedFiles}
+              files={media.files}
+              onChange={media.setFiles}
               disabled={busy}
-              uploads={uploads}
+              uploads={media.uploads}
             />
             <p className="text-xs text-muted-foreground">
               Photos and documents are uploaded when you create the property.
@@ -273,7 +235,7 @@ export function PropertyForm({
             </Button>
           )}
           <Button type="submit" disabled={busy}>
-            {isUploadingMedia
+            {media.isUploading
               ? "Uploading media…"
               : mutation.isPending
                 ? isEdit

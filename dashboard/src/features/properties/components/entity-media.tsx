@@ -5,7 +5,11 @@ import { getErrorMessage } from "@/core/errors";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MEDIA_PAGE_SIZE, usePropertyMedia } from "../api/media.queries";
+import {
+  MEDIA_PAGE_SIZE,
+  useEntityMedia,
+  type MediaEntityType,
+} from "../api/media.queries";
 import type { MediaWithUrl } from "../types";
 
 // Last path segment of a storage key, used as a human-readable label/alt text
@@ -53,13 +57,24 @@ function MediaTile({ media }: { media: MediaWithUrl }) {
   );
 }
 
-// The media section shown on the property details page: the property's media
-// laid out as a responsive grid. Prop-driven (takes the property id) so it can
-// be tested without a router.
-export function PropertyMedia({ propertyId }: { propertyId: string }) {
+// A media section for any entity (property or unit): the entity's media laid
+// out as a responsive, paginated grid. Prop-driven (takes the entity type +
+// id) so it can be tested without a router.
+export function EntityMedia({
+  entityType,
+  entityId,
+  description,
+}: {
+  entityType: MediaEntityType;
+  entityId: string;
+  description: string;
+}) {
   const [page, setPage] = useState(0);
-  const { data, isPending, isError, error, isPlaceholderData } =
-    usePropertyMedia(propertyId, page);
+  const { data, isPending, isError, error, isPlaceholderData } = useEntityMedia(
+    entityType,
+    entityId,
+    page,
+  );
 
   const total = data?.total ?? 0;
   const pageCount = Math.ceil(total / MEDIA_PAGE_SIZE);
@@ -70,9 +85,7 @@ export function PropertyMedia({ propertyId }: { propertyId: string }) {
     <section className="space-y-4">
       <div className="space-y-1">
         <h2 className="text-lg font-semibold tracking-tight">Media</h2>
-        <p className="text-sm text-muted-foreground">
-          Photos and documents for this property.
-        </p>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
 
       {isPending && (

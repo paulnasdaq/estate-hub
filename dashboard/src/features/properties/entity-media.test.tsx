@@ -4,9 +4,10 @@ import { describe, expect, test } from "vitest";
 
 import { render, screen, waitFor } from "@/test/test-utils";
 import { server } from "@/test/msw/server";
-import { PropertyMedia } from "./components/property-media";
+import { EntityMedia } from "./components/entity-media";
 
 const PROPERTY_ID = "22222222-2222-2222-2222-222222222222";
+const UNIT_ID = "55555555-5555-5555-5555-555555555555";
 const now = "2026-01-01T00:00:00Z";
 
 function mediaItem(overrides: Record<string, unknown>) {
@@ -24,7 +25,17 @@ function mediaItem(overrides: Record<string, unknown>) {
   };
 }
 
-describe("PropertyMedia", () => {
+function renderProperty() {
+  return render(
+    <EntityMedia
+      entityType="property"
+      entityId={PROPERTY_ID}
+      description="Photos and documents for this property."
+    />,
+  );
+}
+
+describe("EntityMedia", () => {
   test("renders images as a grid of thumbnails", async () => {
     server.use(
       http.get("*/api/v1/properties/:propertyId/media", () =>
@@ -43,7 +54,7 @@ describe("PropertyMedia", () => {
       ),
     );
 
-    render(<PropertyMedia propertyId={PROPERTY_ID} />);
+    renderProperty();
 
     const img = await screen.findByRole("img", { name: "kitchen.jpg" });
     expect(img).toHaveAttribute("src", "http://s3.test/kitchen.jpg");
@@ -68,7 +79,7 @@ describe("PropertyMedia", () => {
       ),
     );
 
-    render(<PropertyMedia propertyId={PROPERTY_ID} />);
+    renderProperty();
 
     // No thumbnail — the file name is shown as a label instead.
     expect(await screen.findByText("lease.pdf")).toBeInTheDocument();
@@ -77,39 +88,68 @@ describe("PropertyMedia", () => {
 
   test("shows an empty state when there is no media", async () => {
     // Uses the default empty media handler.
-    render(<PropertyMedia propertyId={PROPERTY_ID} />);
+    renderProperty();
 
     expect(await screen.findByText("No media yet.")).toBeInTheDocument();
+  });
+
+  test("fetches from the unit endpoint for unit media", async () => {
+    server.use(
+      http.get("*/api/v1/units/:unitId/media", ({ params }) =>
+        HttpResponse.json({
+          items: [
+            mediaItem({
+              id: "unit-img-1",
+              entity_type: "unit",
+              entity_id: params.unitId as string,
+              storage_key: `units/${UNIT_ID}/images/bedroom.jpg`,
+              url: "http://s3.test/bedroom.jpg",
+            }),
+          ],
+          total: 1,
+          limit: 50,
+          offset: 0,
+        }),
+      ),
+    );
+
+    render(
+      <EntityMedia
+        entityType="unit"
+        entityId={UNIT_ID}
+        description="Photos and documents for this unit."
+      />,
+    );
+
+    const img = await screen.findByRole("img", { name: "bedroom.jpg" });
+    expect(img).toHaveAttribute("src", "http://s3.test/bedroom.jpg");
   });
 
   test("pages through media by offset", async () => {
     // A page of 12 tiles per request; the server pages by the offset query.
     server.use(
-      http.get(
-        "*/api/v1/properties/:propertyId/media",
-        ({ request }) => {
-          const offset = Number(
-            new URL(request.url).searchParams.get("offset") ?? "0",
-          );
-          const index = offset === 0 ? 0 : 1;
-          return HttpResponse.json({
-            items: [
-              mediaItem({
-                id: `img-${index}`,
-                storage_key: `properties/${PROPERTY_ID}/images/photo-${index}.jpg`,
-                url: `http://s3.test/photo-${index}.jpg`,
-              }),
-            ],
-            total: 13, // spills onto a second page (page size is 12)
-            limit: 12,
-            offset,
-          });
-        },
-      ),
+      http.get("*/api/v1/properties/:propertyId/media", ({ request }) => {
+        const offset = Number(
+          new URL(request.url).searchParams.get("offset") ?? "0",
+        );
+        const index = offset === 0 ? 0 : 1;
+        return HttpResponse.json({
+          items: [
+            mediaItem({
+              id: `img-${index}`,
+              storage_key: `properties/${PROPERTY_ID}/images/photo-${index}.jpg`,
+              url: `http://s3.test/photo-${index}.jpg`,
+            }),
+          ],
+          total: 13, // spills onto a second page (page size is 12)
+          limit: 12,
+          offset,
+        });
+      }),
     );
 
     const user = userEvent.setup();
-    render(<PropertyMedia propertyId={PROPERTY_ID} />);
+    renderProperty();
 
     expect(
       await screen.findByRole("img", { name: "photo-0.jpg" }),

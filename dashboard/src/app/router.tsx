@@ -8,6 +8,9 @@ import {
   propertyDetailsRoute,
   propertyEditRoute,
   propertyUnitsRoute,
+  propertyNewUnitRoute,
+  propertyUnitDetailRoute,
+  propertyUnitEditRoute,
 } from "@/features/properties";
 import {
   organizationsRoute,
@@ -23,6 +26,9 @@ const routeTree = rootRoute.addChildren([
   propertyDetailsRoute,
   propertyEditRoute,
   propertyUnitsRoute,
+  propertyNewUnitRoute,
+  propertyUnitDetailRoute,
+  propertyUnitEditRoute,
   organizationsRoute,
   newOrganizationRoute,
 ]);

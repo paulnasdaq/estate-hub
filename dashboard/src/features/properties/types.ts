@@ -9,6 +9,7 @@ export type PropertyUpdate = components["schemas"]["PropertyUpdate"];
 // Units are always scoped to a property (see the nested API routes).
 export type Unit = components["schemas"]["UnitRead"];
 export type UnitCreateNested = components["schemas"]["UnitCreateNested"];
+export type UnitUpdate = components["schemas"]["UnitUpdate"];
 
 // Media is polymorphic on the backend; the dashboard only attaches it to
 // properties today (entity_type: "property").

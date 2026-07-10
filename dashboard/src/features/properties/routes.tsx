@@ -6,6 +6,9 @@ import { NewPropertyPage } from "./components/new-property-page";
 import { PropertyDetailsPage } from "./components/property-details-page";
 import { EditPropertyPage } from "./components/edit-property-page";
 import { PropertyUnitsPage } from "./components/property-units-page";
+import { NewUnitPage } from "./components/new-unit-page";
+import { UnitDetailsPage } from "./components/unit-details-page";
+import { EditUnitPage } from "./components/edit-unit-page";
 
 // This feature's routes — mirrors the backend's properties/routes.py.
 export const propertiesRoute = createRoute({
@@ -53,4 +56,37 @@ export const propertyUnitsRoute = createRoute({
 function PropertyUnitsRouteComponent() {
   const { propertyId } = propertyUnitsRoute.useParams();
   return <PropertyUnitsPage propertyId={propertyId} />;
+}
+
+export const propertyNewUnitRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/properties/$propertyId/units/new",
+  component: PropertyNewUnitRouteComponent,
+});
+
+function PropertyNewUnitRouteComponent() {
+  const { propertyId } = propertyNewUnitRoute.useParams();
+  return <NewUnitPage propertyId={propertyId} />;
+}
+
+export const propertyUnitDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/properties/$propertyId/units/$unitId",
+  component: PropertyUnitDetailRouteComponent,
+});
+
+function PropertyUnitDetailRouteComponent() {
+  const { propertyId, unitId } = propertyUnitDetailRoute.useParams();
+  return <UnitDetailsPage propertyId={propertyId} unitId={unitId} />;
+}
+
+export const propertyUnitEditRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/properties/$propertyId/units/$unitId/edit",
+  component: PropertyUnitEditRouteComponent,
+});
+
+function PropertyUnitEditRouteComponent() {
+  const { propertyId, unitId } = propertyUnitEditRoute.useParams();
+  return <EditUnitPage propertyId={propertyId} unitId={unitId} />;
 }
