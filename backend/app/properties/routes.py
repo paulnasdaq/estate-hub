@@ -208,3 +208,43 @@ def delete_unit(
 ) -> Response:
     UnitService(db).delete(unit)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@unit_router.get("/{unit_id}/media", response_model=Page[MediaWithUrl])
+def list_unit_media(
+    pagination: PaginationParams = Depends(),
+    unit: models.Unit = Depends(get_unit_or_404),
+    service: MediaService = Depends(get_media_service),
+) -> Page[MediaWithUrl]:
+    items, total = service.list_for_entity(
+        "unit", unit.id, pagination.limit, pagination.offset
+    )
+    # Attach the object's public URL to each item so the client can render it
+    # directly from the (public) media bucket.
+    media = [
+        MediaWithUrl(
+            **MediaRead.model_validate(item).model_dump(),
+            url=service.public_url(item.storage_key),
+        )
+        for item in items
+    ]
+    return Page(
+        items=media,
+        total=total,
+        limit=pagination.limit,
+        offset=pagination.offset,
+    )
+
+
+@unit_router.post("/{unit_id}/media/presigns", response_model=MediaPresignResponse)
+def create_unit_media_presign(
+    payload: MediaPresignRequest,
+    unit: models.Unit = Depends(get_unit_or_404),
+    service: MediaService = Depends(get_media_service),
+) -> MediaPresignResponse:
+    # Derive a storage key scoped to the unit, foldered by media kind:
+    # units/<id>/(images|videos|files)/<filename>.
+    category = MediaService.storage_category(payload.content_type)
+    key = f"units/{unit.id}/{category}/{payload.filename}"
+    upload_url = service.generate_presigned_upload_url(key, payload.content_type)
+    return MediaPresignResponse(storage_key=key, upload_url=upload_url)
