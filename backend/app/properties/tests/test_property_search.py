@@ -1,6 +1,10 @@
 import uuid
+from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
+from app.properties import models
 
 PROPERTIES = "/api/v1/properties"
 
@@ -93,3 +97,22 @@ def test_no_filters_returns_everything(client: TestClient) -> None:
 
     body = client.get(PROPERTIES).json()
     assert body["total"] == 2
+
+
+def test_list_defaults_to_newest_first(
+    client: TestClient, db_session: Session
+) -> None:
+    old_id = _create_property(client, name="Older")
+    new_id = _create_property(client, name="Newer")
+
+    # Pin distinct creation times so ordering can't hinge on microsecond ties.
+    db_session.get(models.Property, uuid.UUID(old_id)).created_at = datetime(
+        2020, 1, 1, tzinfo=UTC
+    )
+    db_session.get(models.Property, uuid.UUID(new_id)).created_at = datetime(
+        2024, 1, 1, tzinfo=UTC
+    )
+    db_session.commit()
+
+    body = client.get(PROPERTIES).json()
+    assert [p["name"] for p in body["items"]] == ["Newer", "Older"]

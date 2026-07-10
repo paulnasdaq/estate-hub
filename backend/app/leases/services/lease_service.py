@@ -35,7 +35,7 @@ class LeaseService:
             self.db.scalars(
                 select(models.Lease)
                 .where(active)
-                .order_by(models.Lease.created_at)
+                .order_by(models.Lease.created_at.desc())
                 .limit(limit)
                 .offset(offset)
             )

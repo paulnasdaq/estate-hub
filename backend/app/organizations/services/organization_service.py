@@ -31,7 +31,7 @@ class OrganizationService:
             self.db.scalars(
                 select(models.Organization)
                 .where(active)
-                .order_by(models.Organization.created_at)
+                .order_by(models.Organization.created_at.desc())
                 .limit(limit)
                 .offset(offset)
             )

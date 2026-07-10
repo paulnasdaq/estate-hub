@@ -43,7 +43,7 @@ class UnitService:
             self.db.scalars(
                 select(models.Unit)
                 .where(*filters)
-                .order_by(models.Unit.created_at)
+                .order_by(models.Unit.created_at.desc())
                 .limit(limit)
                 .offset(offset)
             )
@@ -74,7 +74,7 @@ class UnitService:
             self.db.scalars(
                 select(models.Unit)
                 .where(*filters)
-                .order_by(models.Unit.created_at)
+                .order_by(models.Unit.created_at.desc())
                 .limit(limit)
                 .offset(offset)
             )

@@ -52,7 +52,7 @@ class PropertyService:
             self.db.scalars(
                 select(models.Property)
                 .where(*filters)
-                .order_by(models.Property.created_at)
+                .order_by(models.Property.created_at.desc())
                 .limit(limit)
                 .offset(offset)
             )
