@@ -43,4 +43,31 @@ describe("MediaPicker", () => {
 
     expect(screen.getAllByText("kitchen.jpg")).toHaveLength(1);
   });
+
+  test("shows an upload progress ring and hides removal while uploading", () => {
+    const file = new File(["x"], "kitchen.jpg", {
+      type: "image/jpeg",
+      lastModified: 1,
+    });
+    const key = `${file.name}:${file.size}:${file.lastModified}`;
+
+    render(
+      <MediaPicker
+        files={[file]}
+        onChange={() => {}}
+        uploads={{ [key]: { status: "uploading", progress: 0.42 } }}
+      />,
+    );
+
+    // Determinate ring reflects the fraction, and the percentage is shown.
+    const ring = screen.getByRole("progressbar", {
+      name: "Uploading kitchen.jpg",
+    });
+    expect(ring).toHaveAttribute("aria-valuenow", "42");
+    expect(screen.getByText("Uploading… 42%")).toBeInTheDocument();
+    // A file mid-upload can't be removed.
+    expect(
+      screen.queryByRole("button", { name: "Remove kitchen.jpg" }),
+    ).not.toBeInTheDocument();
+  });
 });

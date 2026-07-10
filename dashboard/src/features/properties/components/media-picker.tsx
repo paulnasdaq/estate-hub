@@ -1,8 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
-import { Film, ImageIcon, Paperclip, UploadCloud, X } from "lucide-react";
+import {
+  AlertCircle,
+  Check,
+  Film,
+  ImageIcon,
+  Paperclip,
+  UploadCloud,
+  X,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { CircularProgress } from "@/components/ui/circular-progress";
+import { fileKey, type MediaUpload } from "./media-upload";
 
 const decimal = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
 
@@ -19,12 +29,6 @@ function iconFor(file: File) {
   return Paperclip;
 }
 
-// Stable identity for a picked file, used both for de-duping re-selections and
-// as a React key.
-function fileKey(file: File): string {
-  return `${file.name}:${file.size}:${file.lastModified}`;
-}
-
 // A controlled file-staging control: it holds no upload logic, just the list of
 // files the parent will upload later. Supports click-to-pick and drag-and-drop,
 // shows image thumbnails, and lets individual files be removed before upload.
@@ -32,10 +36,14 @@ export function MediaPicker({
   files,
   onChange,
   disabled = false,
+  uploads,
 }: {
   files: File[];
   onChange: (files: File[]) => void;
   disabled?: boolean;
+  // Upload state per file, keyed by fileKey(). When present for a file, a
+  // circular progress ring (or a done/error badge) is shown over its thumbnail.
+  uploads?: Record<string, MediaUpload>;
 }) {
   const [dragging, setDragging] = useState(false);
 
@@ -120,35 +128,71 @@ export function MediaPicker({
           {files.map((file, index) => {
             const Icon = iconFor(file);
             const preview = previews.get(file);
+            const upload = uploads?.[fileKey(file)];
+            const isActive =
+              upload?.status === "pending" || upload?.status === "uploading";
             return (
               <li
                 key={fileKey(file)}
                 className="flex items-center gap-3 px-3 py-2"
               >
-                <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded bg-muted">
+                <div className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded bg-muted">
                   {preview ? (
                     <img src={preview} alt="" className="size-full object-cover" />
                   ) : (
                     <Icon className="size-4 text-muted-foreground" />
                   )}
+                  {isActive && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/70">
+                      <CircularProgress
+                        size={24}
+                        // "pending" has no fraction yet, so spin until it starts.
+                        value={
+                          upload.status === "uploading"
+                            ? upload.progress
+                            : undefined
+                        }
+                        className="text-primary"
+                        aria-label={`Uploading ${file.name}`}
+                      />
+                    </div>
+                  )}
+                  {upload?.status === "done" && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/70">
+                      <Check className="size-5 text-primary" />
+                    </div>
+                  )}
+                  {upload?.status === "error" && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-destructive/15">
+                      <AlertCircle className="size-5 text-destructive" />
+                    </div>
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{file.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {formatBytes(file.size)}
+                    {upload?.status === "uploading"
+                      ? `Uploading… ${Math.round(upload.progress * 100)}%`
+                      : upload?.status === "error"
+                        ? "Upload failed"
+                        : formatBytes(file.size)}
                   </p>
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="shrink-0"
-                  aria-label={`Remove ${file.name}`}
-                  disabled={disabled}
-                  onClick={() => removeAt(index)}
-                >
-                  <X />
-                </Button>
+                {/* Once an upload is in flight the list is frozen, so removal
+                    only makes sense while still staging. */}
+                {!upload && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="shrink-0"
+                    aria-label={`Remove ${file.name}`}
+                    disabled={disabled}
+                    onClick={() => removeAt(index)}
+                  >
+                    <X />
+                  </Button>
+                )}
               </li>
             );
           })}

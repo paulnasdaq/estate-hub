@@ -31,6 +31,7 @@ import { uploadPropertyMedia } from "../api/media.queries";
 import { propertyFormSchema, type PropertyFormValues } from "../schemas";
 import type { Property } from "../types";
 import { MediaPicker } from "./media-picker";
+import { fileKey, type MediaUpload } from "./media-upload";
 
 // Lazy-loaded so the sizeable mapbox-gl bundle stays out of the main app chunk
 // (mirrors PropertyMap on the details page).
@@ -72,6 +73,9 @@ export function PropertyForm({
   // uploaded until the property exists, so we hold them and upload after create.
   const [stagedFiles, setStagedFiles] = useState<File[]>([]);
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  // Per-file upload state keyed by fileKey(), driving the progress rings in the
+  // picker. Empty while staging; populated once submission starts uploading.
+  const [uploads, setUploads] = useState<Record<string, MediaUpload>>({});
   const busy = mutation.isPending || isUploadingMedia;
 
   const form = useForm<PropertyFormValues>({
@@ -126,14 +130,35 @@ export function PropertyForm({
       // control back to the caller rather than trapping the user on the form.
       if (stagedFiles.length > 0) {
         setIsUploadingMedia(true);
+        // Mark every file queued so the picker shows a ring on each up front.
+        setUploads(
+          Object.fromEntries(
+            stagedFiles.map((file) => [
+              fileKey(file),
+              { status: "pending", progress: 0 } satisfies MediaUpload,
+            ]),
+          ),
+        );
         try {
           // Upload in order; the first file becomes the property's primary
           // (cover) media.
           for (const [index, file] of stagedFiles.entries()) {
-            await uploadPropertyMedia(saved.id, file, {
-              isPrimary: index === 0,
-              displayOrder: index,
-            });
+            const key = fileKey(file);
+            const setState = (state: MediaUpload) =>
+              setUploads((prev) => ({ ...prev, [key]: state }));
+            setState({ status: "uploading", progress: 0 });
+            try {
+              await uploadPropertyMedia(saved.id, file, {
+                isPrimary: index === 0,
+                displayOrder: index,
+                onProgress: (fraction) =>
+                  setState({ status: "uploading", progress: fraction }),
+              });
+              setState({ status: "done", progress: 1 });
+            } catch (error) {
+              setState({ status: "error", progress: 0 });
+              throw error;
+            }
           }
         } catch (error) {
           toast.error(
@@ -228,6 +253,7 @@ export function PropertyForm({
               files={stagedFiles}
               onChange={setStagedFiles}
               disabled={busy}
+              uploads={uploads}
             />
             <p className="text-xs text-muted-foreground">
               Photos and documents are uploaded when you create the property.
