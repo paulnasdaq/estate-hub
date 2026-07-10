@@ -93,6 +93,37 @@ describe("PropertiesPage", () => {
     );
   });
 
+  test("pages through the list by offset", async () => {
+    const user = userEvent.setup();
+    // 10 rows per page; page 2 holds a single extra row.
+    server.use(
+      http.get("*/api/v1/properties", ({ request }) => {
+        const offset = Number(
+          new URL(request.url).searchParams.get("offset") ?? "0",
+        );
+        const items =
+          offset === 0
+            ? [makeProperty("1", "Page One Place")]
+            : [makeProperty("2", "Page Two Place")];
+        return HttpResponse.json({ items, total: 11, limit: 10, offset });
+      }),
+    );
+
+    renderPage();
+
+    expect(await screen.findByText("Page One Place")).toBeInTheDocument();
+    expect(screen.getByText("Page 1 of 2")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /previous/i })).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: /next/i }));
+
+    expect(await screen.findByText("Page Two Place")).toBeInTheDocument();
+    expect(screen.getByText("Page 2 of 2")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /next/i })).toBeDisabled(),
+    );
+  });
+
   test("shows an empty state when a search matches nothing", async () => {
     const user = userEvent.setup();
     server.use(

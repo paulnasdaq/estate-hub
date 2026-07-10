@@ -1,20 +1,31 @@
 import { Link } from "@tanstack/react-router";
-import { Plus, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
 import { useState } from "react";
 
 import { getErrorMessage } from "@/core/errors";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useProperties } from "../api/properties.queries";
+import {
+  PROPERTIES_PAGE_SIZE,
+  useProperties,
+} from "../api/properties.queries";
 import { PropertyTable } from "./property-table";
 
 export function PropertiesPage() {
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
   const debouncedSearch = useDebouncedValue(search.trim());
-  const { data, isPending, isError, error } = useProperties({
+
+  const { data, isPending, isError, error, isPlaceholderData } = useProperties({
     search: debouncedSearch || undefined,
+    page,
   });
+
+  const total = data?.total ?? 0;
+  const pageCount = Math.ceil(total / PROPERTIES_PAGE_SIZE);
+  const hasPrev = page > 0;
+  const hasNext = page < pageCount - 1;
 
   return (
     <div className="space-y-4">
@@ -34,7 +45,11 @@ export function PropertiesPage() {
           type="search"
           placeholder="Search properties by name…"
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
+          onChange={(event) => {
+            setSearch(event.target.value);
+            // A new search term restarts paging from the first page.
+            setPage(0);
+          }}
           aria-label="Search properties by name"
           className="pl-9"
         />
@@ -48,7 +63,39 @@ export function PropertiesPage() {
       )}
       {data &&
         (data.items.length > 0 ? (
-          <PropertyTable data={data.items} />
+          <>
+            <div className={isPlaceholderData ? "opacity-60" : undefined}>
+              <PropertyTable data={data.items} />
+            </div>
+
+            {pageCount > 1 && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Page {page + 1} of {pageCount}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!hasPrev}
+                    onClick={() => setPage((p) => p - 1)}
+                  >
+                    <ChevronLeft />
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!hasNext}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Next
+                    <ChevronRight />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           <p className="text-sm text-muted-foreground">
             {debouncedSearch

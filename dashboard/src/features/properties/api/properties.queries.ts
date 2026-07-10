@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   queryOptions,
   useMutation,
   useQuery,
@@ -8,22 +9,32 @@ import {
 import { api, unwrap } from "@/core/api/client";
 import type { PropertyCreate, PropertyUpdate } from "../types";
 
+// How many property rows a single list page holds.
+export const PROPERTIES_PAGE_SIZE = 10;
+
+type PropertyListParams = { search?: string; limit: number; offset: number };
+
 // Data access for the properties feature (the client-side analog of the
 // backend's services/property_service.py). Centralizing queryOptions here keeps
 // query keys consistent and lets routes prefetch with the same definition.
 export const propertyQueries = {
   all: ["properties"] as const,
 
-  list: (params: { search?: string } = {}) =>
+  list: (params: PropertyListParams) =>
     queryOptions({
-      // Search is part of the key so each term caches separately.
+      // Search + pagination are part of the key so each term/page caches
+      // separately.
       queryKey: [...propertyQueries.all, "list", params],
       // The list endpoint is paginated: { items, total, limit, offset }.
       queryFn: () =>
         unwrap(
           api.GET("/api/v1/properties", {
             params: {
-              query: params.search ? { search: params.search } : {},
+              query: {
+                ...(params.search ? { search: params.search } : {}),
+                limit: params.limit,
+                offset: params.offset,
+              },
             },
           }),
         ),
@@ -41,12 +52,16 @@ export const propertyQueries = {
     }),
 };
 
-export function useProperties(params: { search?: string } = {}) {
+export function useProperties(params: { search?: string; page: number }) {
   return useQuery({
-    ...propertyQueries.list(params),
-    // Keep the previous page's rows visible while a new search resolves, so the
-    // table doesn't flash empty on every keystroke.
-    placeholderData: (previous) => previous,
+    ...propertyQueries.list({
+      search: params.search,
+      limit: PROPERTIES_PAGE_SIZE,
+      offset: params.page * PROPERTIES_PAGE_SIZE,
+    }),
+    // Keep the previous page's rows visible while a new search/page resolves,
+    // so the table doesn't flash empty on every keystroke or page change.
+    placeholderData: keepPreviousData,
   });
 }
 
