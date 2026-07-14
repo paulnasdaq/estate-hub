@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.auth.routes import user_router
+from app.billing.routes import bill_router
 from app.leases.routes import lease_router
 from app.organizations.routes import router as organizations_router
 from app.properties.routes import property_router, unit_router
@@ -13,4 +14,5 @@ api_router.include_router(user_router)
 api_router.include_router(property_router)
 api_router.include_router(unit_router)
 api_router.include_router(lease_router)
+api_router.include_router(bill_router)
 api_router.include_router(media_router)

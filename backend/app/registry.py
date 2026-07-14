@@ -5,6 +5,7 @@ Add each new feature's models module here.
 """
 
 from app.auth import models as auth_models  # noqa: F401
+from app.billing import models as billing_models  # noqa: F401
 from app.leases import models as leases_models  # noqa: F401
 from app.organizations import models as organizations_models  # noqa: F401
 from app.properties import models as properties_models  # noqa: F401
