@@ -12,6 +12,9 @@ x-backend-base: &backend-base
     ENVIRONMENT: local
     LOG_LEVEL: DEBUG
     DATABASE_URL: postgresql+psycopg://app:app@db:5432/app
+    REDIS_URL: redis://redis:6379/0
+    CELERY_BROKER_URL: redis://redis:6379/1
+    CELERY_RESULT_BACKEND: redis://redis:6379/2
   volumes:
     # Live-mount the source (hot reload / latest migrations). The venv is at
     # /opt/venv, so it is not shadowed by this mount.
@@ -31,6 +34,18 @@ services:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Shared Redis: Celery broker/result backend plus general app use.
+  redis:
+    image: redis:7-alpine
+    ports:
+      # Exposed so you can inspect keys with a local redis-cli during dev.
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -55,6 +70,38 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+
+  # Celery worker: executes queued and scheduled tasks.
+  worker:
+    <<: *backend-base
+    command: celery -A app.core.celery_app worker --loglevel=INFO
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  # Celery beat: enqueues periodic tasks on the schedule in celery_app.py.
+  beat:
+    <<: *backend-base
+    command: celery -A app.core.celery_app beat --loglevel=INFO
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  # Flower: web UI for inspecting workers, tasks, and queues.
+  # Opt-in: `docker compose -f docker-compose.dev.yml --profile monitoring up`.
+  flower:
+    <<: *backend-base
+    command: celery -A app.core.celery_app flower --port=5555
+    profiles: ["monitoring"]
+    ports:
+      - "5555:5555"
+    depends_on:
+      redis:
+        condition: service_healthy
 
   # Vite dev server with hot reload. Installs deps on start (into the named
   # volume, so the host's node_modules never shadows the container's), then

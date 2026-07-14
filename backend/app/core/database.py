@@ -1,5 +1,6 @@
 import uuid
-from collections.abc import Generator
+from collections.abc import Generator, Iterator
+from contextlib import contextmanager
 from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, Uuid, create_engine
@@ -38,5 +39,23 @@ def get_db() -> Generator[Session, None, None]:
     db = SessionLocal()
     try:
         yield db
+    finally:
+        db.close()
+
+
+@contextmanager
+def session_scope() -> Iterator[Session]:
+    """Session context for code outside the request cycle (Celery tasks, CLI).
+
+    Unlike ``get_db``, this is not a FastAPI dependency: it owns the transaction,
+    committing on success and rolling back on error, then always closing.
+    """
+    db = SessionLocal()
+    try:
+        yield db
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()

@@ -8,9 +8,15 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app import registry  # noqa: F401  (registers all models on Base.metadata)
+from app.core.celery_app import celery_app
 from app.core.database import Base, get_db
 from app.core.s3 import get_s3_client
 from app.main import app
+
+# Run Celery tasks inline in the calling process (no broker/worker needed) and
+# re-raise task errors so assertions see them.
+celery_app.conf.task_always_eager = True
+celery_app.conf.task_eager_propagates = True
 
 
 class FakeS3Client:

@@ -21,6 +21,15 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     database_url: str = "sqlite:///./app.db"
 
+    # Redis is a shared resource (caching, rate limiting, and the Celery broker
+    # below). ``redis_url`` is the general-purpose connection for application
+    # code; Celery gets its own logical databases so task traffic never collides
+    # with app keys. Defaults target a local Redis; docker-compose overrides the
+    # host to the ``redis`` service.
+    redis_url: str = "redis://localhost:6379/0"
+    celery_broker_url: str = "redis://localhost:6379/1"
+    celery_result_backend: str = "redis://localhost:6379/2"
+
     # S3 / object storage. Credentials are optional: when unset, boto3 falls
     # back to its usual chain (env vars, shared config, instance role).
     # ``s3_endpoint_url`` targets S3-compatible stores (MinIO, LocalStack) in
