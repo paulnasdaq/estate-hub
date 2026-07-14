@@ -1,6 +1,14 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import { Building2, Home, LayoutDashboard, Network } from "lucide-react";
+import {
+  Building2,
+  Home,
+  LayoutDashboard,
+  Network,
+  Receipt,
+  ScrollText,
+  Users,
+} from "lucide-react";
 
 import { Separator } from "@/components/ui/separator";
 import {
@@ -27,6 +35,9 @@ const navItems = [
     icon: Network,
     exact: false,
   },
+  { title: "People", to: "/people", icon: Users, exact: false },
+  { title: "Leases", to: "/leases", icon: ScrollText, exact: false },
+  { title: "Bills", to: "/bills", icon: Receipt, exact: false },
 ] as const;
 
 export function RootLayout() {

@@ -16,6 +16,13 @@ import {
   organizationsRoute,
   newOrganizationRoute,
 } from "@/features/organizations";
+import { peopleRoute, newPersonRoute } from "@/features/people";
+import {
+  leasesRoute,
+  newLeaseRoute,
+  leaseDetailRoute,
+} from "@/features/leases";
+import { billsRoute, newBillRoute, billDetailRoute } from "@/features/bills";
 
 // Aggregate every feature's routes under the root (mirrors backend app/api.py).
 // Each feature owns its route definitions and exposes them through its barrel.
@@ -31,6 +38,14 @@ const routeTree = rootRoute.addChildren([
   propertyUnitEditRoute,
   organizationsRoute,
   newOrganizationRoute,
+  peopleRoute,
+  newPersonRoute,
+  leasesRoute,
+  newLeaseRoute,
+  leaseDetailRoute,
+  billsRoute,
+  newBillRoute,
+  billDetailRoute,
 ]);
 
 export const router = createRouter({ routeTree });
