@@ -1,9 +1,11 @@
 import uuid
 
-from sqlalchemy import ForeignKey, Index, Uuid
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import ForeignKey, Index, Uuid, func, select
+from sqlalchemy.orm import Mapped, column_property, mapped_column
 
 from app.core.database import Base
+from app.leases.models.lease import Lease
+from app.properties.models.unit import Unit
 
 
 class Property(Base):
@@ -21,3 +23,34 @@ class Property(Base):
     organization_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("organizations.id"), index=True
     )
+
+
+# Read-only derived counts, exposed as ORM attributes so read schemas can pick
+# them up. Each is a correlated scalar subquery, so it loads in the same SELECT
+# as the property (including list queries) — no extra round-trip per row. They
+# reference the outer `Property` row and are auto-correlated by SQLAlchemy.
+
+# Number of active (non-deleted) units belonging to the property.
+Property.unit_count = column_property(
+    select(func.count(Unit.id))
+    .where(Unit.property_id == Property.id, Unit.deleted_at.is_(None))
+    .scalar_subquery(),
+    deferred=False,
+)
+
+# A unit is "occupied" when it has an active lease — not terminated, not deleted
+# (mirrors the partial unique index on leases). A unit holds at most one such
+# lease, so counting distinct occupied units gives the occupancy figure.
+Property.occupied_unit_count = column_property(
+    select(func.count(func.distinct(Unit.id)))
+    .select_from(Unit)
+    .join(Lease, Lease.unit_id == Unit.id)
+    .where(
+        Unit.property_id == Property.id,
+        Unit.deleted_at.is_(None),
+        Lease.terminated_on.is_(None),
+        Lease.deleted_at.is_(None),
+    )
+    .scalar_subquery(),
+    deferred=False,
+)

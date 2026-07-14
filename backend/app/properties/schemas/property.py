@@ -25,3 +25,6 @@ class PropertyRead(TimestampedRead):
     lng: float
     lat: float
     organization_id: uuid.UUID
+    # Derived, read-only counts (see Property.unit_count / occupied_unit_count).
+    unit_count: int
+    occupied_unit_count: int
