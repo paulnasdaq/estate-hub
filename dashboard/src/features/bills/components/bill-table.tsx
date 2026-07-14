@@ -9,33 +9,44 @@ import {
 } from "@tanstack/react-table";
 import { useState } from "react";
 
-import type { Property } from "../types";
+import type { Bill } from "../types";
 
-const columnHelper = createColumnHelper<Property>();
+const columnHelper = createColumnHelper<Bill>();
+
+const formatDate = (value: string) => new Date(value).toLocaleDateString();
+
+// Truncate a uuid to its first segment so the table stays readable until leases
+// expose a human-friendly label to join against.
+const shortId = (id: string) => id.split("-")[0];
 
 const columns = [
-  columnHelper.accessor("name", {
-    header: "Name",
+  columnHelper.accessor("date", {
+    header: "Date",
     cell: (info) => (
       <Link
-        to="/properties/$propertyId"
-        params={{ propertyId: info.row.original.id }}
+        to="/bills/$billId"
+        params={{ billId: info.row.original.id }}
         className="font-medium text-primary hover:underline"
       >
-        {info.getValue()}
+        {formatDate(info.getValue())}
       </Link>
     ),
   }),
-  columnHelper.accessor("unit_count", { header: "Units" }),
-  columnHelper.accessor("occupied_unit_count", {
-    header: "Occupied",
-    cell: (info) => `${info.getValue()} / ${info.row.original.unit_count}`,
+  columnHelper.accessor("lease_id", {
+    header: "Lease",
+    cell: (info) => (
+      <span className="font-mono text-xs text-muted-foreground">
+        {shortId(info.getValue())}
+      </span>
+    ),
   }),
-  columnHelper.accessor("lat", { header: "Latitude" }),
-  columnHelper.accessor("lng", { header: "Longitude" }),
+  columnHelper.accessor("created_at", {
+    header: "Created",
+    cell: (info) => formatDate(info.getValue()),
+  }),
 ];
 
-export function PropertyTable({ data }: { data: Property[] }) {
+export function BillTable({ data }: { data: Bill[] }) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const table = useReactTable({

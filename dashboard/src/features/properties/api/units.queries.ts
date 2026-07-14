@@ -63,6 +63,9 @@ export function usePropertyUnits(
       limit: UNITS_PAGE_SIZE,
       offset: params.page * UNITS_PAGE_SIZE,
     }),
+    // Skip until a property is chosen, so callers can drive this from a
+    // possibly-empty selection (e.g. the new lease form) without a bad request.
+    enabled: propertyId !== "",
     // Keep the previous page's rows visible while a new search/page resolves,
     // so the list doesn't flash empty on every keystroke or page change.
     placeholderData: keepPreviousData,

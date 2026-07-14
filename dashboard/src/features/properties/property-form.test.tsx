@@ -151,6 +151,8 @@ describe("PropertyForm", () => {
       organization_id: "11111111-1111-1111-1111-111111111111",
       lat: 45.52,
       lng: -122.68,
+      unit_count: 0,
+      occupied_unit_count: 0,
     };
 
     let patched: unknown;

@@ -88,6 +88,11 @@ export function PropertyDetailsPage({ propertyId }: { propertyId: string }) {
                 label="Organization"
                 value={organizationName ?? property.organization_id}
               />
+              <Field label="Units" value={property.unit_count} />
+              <Field
+                label="Occupied units"
+                value={`${property.occupied_unit_count} / ${property.unit_count}`}
+              />
               <Field
                 label="Created"
                 value={new Date(property.created_at).toLocaleString()}

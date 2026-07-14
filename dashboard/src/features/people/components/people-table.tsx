@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import {
   createColumnHelper,
   flexRender,
@@ -9,33 +8,27 @@ import {
 } from "@tanstack/react-table";
 import { useState } from "react";
 
-import type { Property } from "../types";
+import type { Person } from "../types";
 
-const columnHelper = createColumnHelper<Property>();
+const columnHelper = createColumnHelper<Person>();
 
 const columns = [
-  columnHelper.accessor("name", {
+  columnHelper.accessor((row) => `${row.first_name} ${row.last_name}`, {
+    id: "name",
     header: "Name",
-    cell: (info) => (
-      <Link
-        to="/properties/$propertyId"
-        params={{ propertyId: info.row.original.id }}
-        className="font-medium text-primary hover:underline"
-      >
-        {info.getValue()}
-      </Link>
-    ),
   }),
-  columnHelper.accessor("unit_count", { header: "Units" }),
-  columnHelper.accessor("occupied_unit_count", {
-    header: "Occupied",
-    cell: (info) => `${info.getValue()} / ${info.row.original.unit_count}`,
+  columnHelper.accessor("email", { header: "Email" }),
+  columnHelper.accessor("phone", {
+    header: "Phone",
+    cell: (info) => info.getValue() ?? "—",
   }),
-  columnHelper.accessor("lat", { header: "Latitude" }),
-  columnHelper.accessor("lng", { header: "Longitude" }),
+  columnHelper.accessor("created_at", {
+    header: "Created",
+    cell: (info) => new Date(info.getValue()).toLocaleDateString(),
+  }),
 ];
 
-export function PropertyTable({ data }: { data: Property[] }) {
+export function PeopleTable({ data }: { data: Person[] }) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const table = useReactTable({

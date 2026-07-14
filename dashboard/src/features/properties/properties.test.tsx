@@ -17,6 +17,8 @@ function makeProperty(id: string, name: string) {
     lat: 45.52,
     lng: -122.68,
     organization_id: SAMPLE_ORG_ID,
+    unit_count: 4,
+    occupied_unit_count: 1,
   };
 }
 
@@ -30,10 +32,12 @@ const renderPage = () =>
 
 describe("PropertiesPage", () => {
   test("renders the properties returned by the API", async () => {
-    // Uses the default handler in test/msw/handlers.ts.
+    // Uses the default handler in test/msw/handlers.ts (3 units, 2 occupied).
     renderPage();
 
     expect(await screen.findByText("Maple Court")).toBeInTheDocument();
+    // Occupancy is rendered as "occupied / total".
+    expect(screen.getByText("2 / 3")).toBeInTheDocument();
   });
 
   test("shows an error message when the request fails", async () => {
