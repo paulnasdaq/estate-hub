@@ -41,6 +41,24 @@ export interface paths {
         patch: operations["update_organization_api_v1_organizations__org_id__patch"];
         trace?: never;
     };
+    "/api/v1/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Users */
+        get: operations["list_users_api_v1_users_get"];
+        put?: never;
+        /** Create User */
+        post: operations["create_user_api_v1_users_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/properties": {
         parameters: {
             query?: never;
@@ -238,6 +256,43 @@ export interface paths {
         patch: operations["update_lease_api_v1_leases__lease_id__patch"];
         trace?: never;
     };
+    "/api/v1/bills": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Bills */
+        get: operations["list_bills_api_v1_bills_get"];
+        put?: never;
+        /** Create Bill */
+        post: operations["create_bill_api_v1_bills_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/bills/{bill_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Bill */
+        get: operations["get_bill_api_v1_bills__bill_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Bill */
+        delete: operations["delete_bill_api_v1_bills__bill_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Bill */
+        patch: operations["update_bill_api_v1_bills__bill_id__patch"];
+        trace?: never;
+    };
     "/api/v1/media": {
         parameters: {
             query?: never;
@@ -296,6 +351,117 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** BillCreate */
+        BillCreate: {
+            /**
+             * Lease Id
+             * Format: uuid
+             */
+            lease_id: string;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /**
+             * Items
+             * @default []
+             */
+            items: components["schemas"]["BillItemCreate"][];
+        };
+        /** BillItemCreate */
+        BillItemCreate: {
+            /** Name */
+            name: string;
+            /** Amount */
+            amount: number;
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            end_date: string;
+            /** Lease Term Id */
+            lease_term_id?: string | null;
+        };
+        /** BillItemRead */
+        BillItemRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Deleted At */
+            deleted_at?: string | null;
+            /** Name */
+            name: string;
+            /** Amount */
+            amount: number;
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            end_date: string;
+            /** Lease Term Id */
+            lease_term_id?: string | null;
+        };
+        /** BillRead */
+        BillRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Deleted At */
+            deleted_at?: string | null;
+            /**
+             * Lease Id
+             * Format: uuid
+             */
+            lease_id: string;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /**
+             * Items
+             * @default []
+             */
+            items: components["schemas"]["BillItemRead"][];
+        };
+        /** BillUpdate */
+        BillUpdate: {
+            /** Lease Id */
+            lease_id?: string | null;
+            /** Date */
+            date?: string | null;
+        };
+        /**
+         * BillingInterval
+         * @description How often a lease term is billed.
+         * @enum {string}
+         */
+        BillingInterval: "daily" | "weekly" | "monthly" | "quarterly" | "biannually" | "annually";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -320,6 +486,11 @@ export interface components {
             effective_from: string;
             /** Terminated On */
             terminated_on?: string | null;
+            /**
+             * Terms
+             * @default []
+             */
+            terms: components["schemas"]["LeaseTermCreate"][];
         };
         /** LeaseRead */
         LeaseRead: {
@@ -352,6 +523,43 @@ export interface components {
             effective_from: string;
             /** Terminated On */
             terminated_on?: string | null;
+            /**
+             * Terms
+             * @default []
+             */
+            terms: components["schemas"]["LeaseTermRead"][];
+        };
+        /** LeaseTermCreate */
+        LeaseTermCreate: {
+            /** Name */
+            name: string;
+            /** Amount */
+            amount: number;
+            interval: components["schemas"]["BillingInterval"];
+            rate: components["schemas"]["RateType"];
+            type: components["schemas"]["PaymentType"];
+        };
+        /** LeaseTermRead */
+        LeaseTermRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Deleted At */
+            deleted_at?: string | null;
+            /** Name */
+            name: string;
+            /** Amount */
+            amount: number;
+            interval: components["schemas"]["BillingInterval"];
+            rate: components["schemas"]["RateType"];
+            type: components["schemas"]["PaymentType"];
         };
         /** LeaseUpdate */
         LeaseUpdate: {
@@ -504,6 +712,17 @@ export interface components {
             /** Name */
             name?: string | null;
         };
+        /** Page[BillRead] */
+        Page_BillRead_: {
+            /** Items */
+            items: components["schemas"]["BillRead"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
         /** Page[LeaseRead] */
         Page_LeaseRead_: {
             /** Items */
@@ -570,6 +789,23 @@ export interface components {
             /** Offset */
             offset: number;
         };
+        /** Page[UserRead] */
+        Page_UserRead_: {
+            /** Items */
+            items: components["schemas"]["UserRead"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /**
+         * PaymentType
+         * @description Whether a lease term is billed in advance or in arrears.
+         * @enum {string}
+         */
+        PaymentType: "prepaid" | "postpaid";
         /** PropertyCreate */
         PropertyCreate: {
             /** Name */
@@ -609,6 +845,10 @@ export interface components {
              * Format: uuid
              */
             organization_id: string;
+            /** Unit Count */
+            unit_count: number;
+            /** Occupied Unit Count */
+            occupied_unit_count: number;
         };
         /** PropertyUpdate */
         PropertyUpdate: {
@@ -621,6 +861,12 @@ export interface components {
             /** Organization Id */
             organization_id?: string | null;
         };
+        /**
+         * RateType
+         * @description Whether a lease term's amount can change over time.
+         * @enum {string}
+         */
+        RateType: "variable" | "fixed";
         /** UnitCreate */
         UnitCreate: {
             /** Name */
@@ -672,6 +918,70 @@ export interface components {
             price?: number | null;
             /** Property Id */
             property_id?: string | null;
+        };
+        /** UserAccountRead */
+        UserAccountRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Deleted At */
+            deleted_at?: string | null;
+            /** Organization Id */
+            organization_id?: string | null;
+        };
+        /** UserCreate */
+        UserCreate: {
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name: string;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Phone */
+            phone?: string | null;
+            /**
+             * Organization Id
+             * Format: uuid
+             */
+            organization_id: string;
+        };
+        /** UserRead */
+        UserRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Deleted At */
+            deleted_at?: string | null;
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name: string;
+            /** Email */
+            email: string;
+            /** Phone */
+            phone?: string | null;
+            /**
+             * Accounts
+             * @default []
+             */
+            accounts: components["schemas"]["UserAccountRead"][];
         };
         /** ValidationError */
         ValidationError: {
@@ -842,6 +1152,71 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OrganizationRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_users_api_v1_users_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_UserRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_user_api_v1_users_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserRead"];
                 };
             };
             /** @description Validation Error */
@@ -1543,6 +1918,166 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LeaseRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_bills_api_v1_bills_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_BillRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_bill_api_v1_bills_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BillCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_bill_api_v1_bills__bill_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bill_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_bill_api_v1_bills__bill_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bill_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_bill_api_v1_bills__bill_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bill_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BillUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BillRead"];
                 };
             };
             /** @description Validation Error */
