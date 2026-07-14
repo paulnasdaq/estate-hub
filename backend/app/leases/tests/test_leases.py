@@ -52,6 +52,75 @@ def test_create_lease(client: TestClient, db_session: Session) -> None:
     assert body["created_at"]
 
 
+def test_create_lease_with_terms(client: TestClient, db_session: Session) -> None:
+    uid, aid = _unit(db_session), _account(db_session)
+    resp = client.post(
+        BASE,
+        json={
+            "unit_id": uid,
+            "account_id": aid,
+            "effective_from": EFFECTIVE_FROM,
+            "terms": [
+                {
+                    "name": "Rent",
+                    "amount": 1200,
+                    "interval": "monthly",
+                    "rate": "fixed",
+                    "type": "prepaid",
+                },
+                {
+                    "name": "Parking",
+                    "amount": 50,
+                    "interval": "monthly",
+                    "rate": "variable",
+                    "type": "postpaid",
+                },
+            ],
+        },
+    )
+    assert resp.status_code == 201
+    terms = resp.json()["terms"]
+    assert len(terms) == 2
+    rent = next(t for t in terms if t["name"] == "Rent")
+    assert rent["amount"] == 1200
+    assert rent["interval"] == "monthly"
+    assert rent["rate"] == "fixed"
+    assert rent["type"] == "prepaid"
+    assert rent["id"] and rent["created_at"]
+
+
+def test_create_lease_defaults_to_no_terms(
+    client: TestClient, db_session: Session
+) -> None:
+    resp = _create(client, _unit(db_session), _account(db_session))
+    assert resp.status_code == 201
+    assert resp.json()["terms"] == []
+
+
+def test_create_lease_rejects_invalid_term_enum(
+    client: TestClient, db_session: Session
+) -> None:
+    uid, aid = _unit(db_session), _account(db_session)
+    resp = client.post(
+        BASE,
+        json={
+            "unit_id": uid,
+            "account_id": aid,
+            "effective_from": EFFECTIVE_FROM,
+            "terms": [
+                {
+                    "name": "Rent",
+                    "amount": 1200,
+                    "interval": "monthly",
+                    "rate": "sometimes",
+                }
+            ],
+        },
+    )
+    assert resp.status_code == 422
+    assert resp.json()["error"]["code"] == "validation_error"
+
+
 def test_create_lease_unknown_unit_is_404(
     client: TestClient, db_session: Session
 ) -> None:

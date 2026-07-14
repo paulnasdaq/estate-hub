@@ -49,7 +49,12 @@ class LeaseService:
         if payload.terminated_on is None:
             self._require_unit_available(payload.unit_id)
 
-        lease = models.Lease(**payload.model_dump())
+        # Terms are handled via the relationship; the rest map straight onto the
+        # Lease columns.
+        lease = models.Lease(
+            **payload.model_dump(exclude={"terms"}),
+            terms=[models.LeaseTerm(**term.model_dump()) for term in payload.terms],
+        )
         self.db.add(lease)
         self.db.commit()
         self.db.refresh(lease)

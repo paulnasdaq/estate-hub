@@ -1,10 +1,15 @@
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Index, Uuid, text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.billing.models.bill import Bill
+    from app.leases.models.lease_term import LeaseTerm
 
 # A unit may hold at most one active lease. Enforced at the DB level by a
 # partial unique index over active rows (no termination date, not soft-deleted).
@@ -33,3 +38,8 @@ class Lease(Base):
     terminated_on: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), default=None
     )
+
+    terms: Mapped[list["LeaseTerm"]] = relationship(
+        back_populates="lease", cascade="all, delete-orphan"
+    )
+    bills: Mapped[list["Bill"]] = relationship(back_populates="lease")
