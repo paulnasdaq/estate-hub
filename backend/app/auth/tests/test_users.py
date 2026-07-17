@@ -52,6 +52,62 @@ def test_list_pagination(client: TestClient) -> None:
     assert len(page2["items"]) == 1
 
 
+def test_list_search_matches_name_or_email(client: TestClient) -> None:
+    org_id = _create_org(client)
+    client.post(
+        BASE,
+        json=_payload(
+            org_id, first_name="Ada", last_name="Lovelace", email="a@example.com"
+        ),
+    )
+    client.post(
+        BASE,
+        json=_payload(
+            org_id, first_name="Grace", last_name="Hopper", email="grace@navy.mil"
+        ),
+    )
+
+    # Case-insensitive match on the last name.
+    by_name = client.get(BASE, params={"search": "hopper"}).json()
+    assert by_name["total"] == 1
+    assert by_name["items"][0]["email"] == "grace@navy.mil"
+
+    # Match on an email substring.
+    by_email = client.get(BASE, params={"search": "navy"}).json()
+    assert by_email["total"] == 1
+    assert by_email["items"][0]["first_name"] == "Grace"
+
+    # No match yields an empty page.
+    none = client.get(BASE, params={"search": "zzz"}).json()
+    assert none == {"items": [], "total": 0, "limit": 50, "offset": 0}
+
+
+def test_get_user_returns_user(client: TestClient) -> None:
+    org_id = _create_org(client)
+    user_id = client.post(BASE, json=_payload(org_id)).json()["id"]
+
+    resp = client.get(f"{BASE}/{user_id}")
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["id"] == user_id
+    assert body["email"] == "ada@example.com"
+    assert body["accounts"][0]["organization_id"] == org_id
+
+
+def test_get_unknown_user_is_404(client: TestClient) -> None:
+    unknown = "00000000-0000-0000-0000-000000000000"
+    resp = client.get(f"{BASE}/{unknown}")
+    assert resp.status_code == 404
+    assert resp.json()["error"]["code"] == "not_found"
+
+
+def test_get_user_invalid_id_is_422(client: TestClient) -> None:
+    resp = client.get(f"{BASE}/not-a-uuid")
+    assert resp.status_code == 422
+    assert resp.json()["error"]["code"] == "validation_error"
+
+
 def test_create_user_creates_account(client: TestClient) -> None:
     org_id = _create_org(client)
 

@@ -1,10 +1,18 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
+import { Building2, ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
 import { useState } from "react";
 
 import { getErrorMessage } from "@/core/errors";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import {
   PROPERTIES_PAGE_SIZE,
@@ -96,12 +104,38 @@ export function PropertiesPage() {
               </div>
             )}
           </>
+        ) : debouncedSearch ? (
+          <Empty className="border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Search />
+              </EmptyMedia>
+              <EmptyTitle>No properties found</EmptyTitle>
+              <EmptyDescription>
+                No properties match “{debouncedSearch}”. Try a different search.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            {debouncedSearch
-              ? `No properties match “${debouncedSearch}”.`
-              : "No properties yet."}
-          </p>
+          <Empty className="border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Building2 />
+              </EmptyMedia>
+              <EmptyTitle>No properties yet</EmptyTitle>
+              <EmptyDescription>
+                Get started by adding your first property.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button asChild size="sm">
+                <Link to="/properties/new">
+                  <Plus />
+                  Add property
+                </Link>
+              </Button>
+            </EmptyContent>
+          </Empty>
         ))}
     </div>
   );

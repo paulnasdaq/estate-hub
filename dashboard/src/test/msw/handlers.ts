@@ -166,7 +166,26 @@ export const handlers = [
   ),
 
   http.get("/api/v1/users", ({ response }) =>
-    response(200).json({ items: [], total: 0, limit: 50, offset: 0 }),
+    response(200).json({ items: [], total: 0, limit: 10, offset: 0 }),
+  ),
+
+  http.get("/api/v1/users/{user_id}", ({ params, response }) =>
+    response(200).json({
+      id: params.user_id,
+      created_at: now,
+      deleted_at: null,
+      first_name: "Ada",
+      last_name: "Lovelace",
+      email: "ada@example.com",
+      phone: null,
+      accounts: [
+        {
+          id: "99999999-9999-9999-9999-999999999999",
+          created_at: now,
+          organization_id: SAMPLE_ORG_ID,
+        },
+      ],
+    }),
   ),
 
   http.get("/api/v1/leases", ({ response }) =>
@@ -205,6 +224,14 @@ export const handlers = [
   }),
 
   http.get("/api/v1/bills", ({ response }) =>
+    response(200).json({ items: [], total: 0, limit: 10, offset: 0 }),
+  ),
+
+  http.get("/api/v1/payments", ({ response }) =>
+    response(200).json({ items: [], total: 0, limit: 10, offset: 0 }),
+  ),
+
+  http.get("/api/v1/leases/{lease_id}/bills", ({ response }) =>
     response(200).json({ items: [], total: 0, limit: 10, offset: 0 }),
   ),
 

@@ -50,7 +50,10 @@ describe("PropertyUnits", () => {
 
     renderUnits();
 
-    expect(await screen.findByText("No units yet.")).toBeInTheDocument();
+    expect(await screen.findByText("No units yet")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /Add unit/ }),
+    ).toBeInTheDocument();
   });
 
   test("sends the debounced search term to the API and shows a no-match state", async () => {
@@ -77,7 +80,7 @@ describe("PropertyUnits", () => {
 
     await waitFor(() => expect(lastSearch).toBe("penthouse"));
     expect(
-      await screen.findByText("No units match “penthouse”."),
+      await screen.findByText(/No units match “penthouse”/),
     ).toBeInTheDocument();
   });
 

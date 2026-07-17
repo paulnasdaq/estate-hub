@@ -59,6 +59,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get User */
+        get: operations["get_user_api_v1_users__user_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/properties": {
         parameters: {
             query?: never;
@@ -256,6 +273,23 @@ export interface paths {
         patch: operations["update_lease_api_v1_leases__lease_id__patch"];
         trace?: never;
     };
+    "/api/v1/leases/{lease_id}/bills": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Lease Bills */
+        get: operations["list_lease_bills_api_v1_leases__lease_id__bills_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/bills": {
         parameters: {
             query?: never;
@@ -291,6 +325,65 @@ export interface paths {
         head?: never;
         /** Update Bill */
         patch: operations["update_bill_api_v1_bills__bill_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Payments */
+        get: operations["list_payments_api_v1_payments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/bills/{bill_id}/payment-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Payment Request */
+        post: operations["create_payment_request_api_v1_bills__bill_id__payment_requests_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payments/integrations/mpesa/stk/process-responses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Process Stk Response
+         * @description Handle Daraja's asynchronous STK push result.
+         *
+         *     Daraja POSTs the callback here with ``payment_request_id`` and a ``sig``
+         *     signature carried on the query string (both set when the push was sent). The
+         *     signature is verified before we reconcile the result, then we return the
+         *     acknowledgement Daraja expects.
+         */
+        post: operations["process_stk_response_api_v1_payments_integrations_mpesa_stk_process_responses_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/media": {
@@ -767,6 +860,17 @@ export interface components {
             /** Offset */
             offset: number;
         };
+        /** Page[PaymentRead] */
+        Page_PaymentRead_: {
+            /** Items */
+            items: components["schemas"]["PaymentRead"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
         /** Page[PropertyRead] */
         Page_PropertyRead_: {
             /** Items */
@@ -800,6 +904,65 @@ export interface components {
             /** Offset */
             offset: number;
         };
+        /** PaymentRead */
+        PaymentRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Deleted At */
+            deleted_at?: string | null;
+            /** Amount */
+            amount: number;
+            /**
+             * Payment Request Id
+             * Format: uuid
+             */
+            payment_request_id: string;
+        };
+        /** PaymentRequestCreate */
+        PaymentRequestCreate: {
+            /** @default pending */
+            status: components["schemas"]["PaymentStatus"];
+        };
+        /** PaymentRequestRead */
+        PaymentRequestRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Deleted At */
+            deleted_at?: string | null;
+            /**
+             * Bill Id
+             * Format: uuid
+             */
+            bill_id: string;
+            status: components["schemas"]["PaymentStatus"];
+            /**
+             * Payments
+             * @default []
+             */
+            payments: components["schemas"]["PaymentRead"][];
+        };
+        /**
+         * PaymentStatus
+         * @description Lifecycle of a payment request against a bill.
+         * @enum {string}
+         */
+        PaymentStatus: "pending" | "failed" | "successful";
         /**
          * PaymentType
          * @description Whether a lease term is billed in advance or in arrears.
@@ -1168,6 +1331,8 @@ export interface operations {
     list_users_api_v1_users_get: {
         parameters: {
             query?: {
+                /** @description Case-insensitive match on name or email */
+                search?: string | null;
                 limit?: number;
                 offset?: number;
             };
@@ -1212,6 +1377,37 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_user_api_v1_users__user_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1931,6 +2127,40 @@ export interface operations {
             };
         };
     };
+    list_lease_bills_api_v1_leases__lease_id__bills_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                lease_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_BillRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_bills_api_v1_bills_get: {
         parameters: {
             query?: {
@@ -2078,6 +2308,113 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BillRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_payments_api_v1_payments_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_PaymentRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_payment_request_api_v1_bills__bill_id__payment_requests_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bill_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentRequestCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentRequestRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    process_stk_response_api_v1_payments_integrations_mpesa_stk_process_responses_post: {
+        parameters: {
+            query: {
+                payment_request_id: string;
+                sig?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Validation Error */

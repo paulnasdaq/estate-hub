@@ -1,11 +1,15 @@
 import uuid
 
-from sqlalchemy import ForeignKey, Index, Uuid, func, select
+from sqlalchemy import ForeignKey, Index, Uuid, func, select, text
 from sqlalchemy.orm import Mapped, column_property, mapped_column
 
 from app.core.database import Base
 from app.leases.models.lease import Lease
 from app.properties.models.unit import Unit
+
+# A property name is unique within its organization. Enforced by a partial
+# unique index over active rows so a soft-deleted name can be reused.
+_ACTIVE_PROPERTY = text("deleted_at IS NULL")
 
 
 class Property(Base):
@@ -15,7 +19,17 @@ class Property(Base):
 
     # Composite index backing the bounding-box radius filter in PropertyService.
     # The trigram index on `name` is Postgres-only and lives in the migration.
-    __table_args__ = (Index("ix_properties_lat_lng", "lat", "lng"),)
+    __table_args__ = (
+        Index("ix_properties_lat_lng", "lat", "lng"),
+        Index(
+            "uq_properties_org_name",
+            "organization_id",
+            "name",
+            unique=True,
+            postgresql_where=_ACTIVE_PROPERTY,
+            sqlite_where=_ACTIVE_PROPERTY,
+        ),
+    )
 
     name: Mapped[str] = mapped_column(index=True)
     lng: Mapped[float]

@@ -1,8 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
 
 import { getErrorMessage } from "@/core/errors";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BILLS_PAGE_SIZE, useLeaseBills } from "@/features/bills";
 import { useLease } from "../api/leases.queries";
 import { INTERVAL_LABELS, PAYMENT_LABELS, RATE_LABELS } from "../schemas";
 import type { Lease } from "../types";
@@ -113,9 +116,113 @@ export function LeaseDetailsPage({ leaseId }: { leaseId: string }) {
               </div>
             )}
           </section>
+
+          <LeaseBillsSection leaseId={leaseId} />
         </>
       )}
     </div>
+  );
+}
+
+// Bills raised against this lease, paginated the same way as the standalone
+// bills list. Kept in the details page (rather than the shared BillTable) so it
+// can drop the redundant lease column and show a per-bill total instead.
+function LeaseBillsSection({ leaseId }: { leaseId: string }) {
+  const [page, setPage] = useState(0);
+  const { data, isPending, isError, error, isPlaceholderData } = useLeaseBills(
+    leaseId,
+    { page },
+  );
+
+  const total = data?.total ?? 0;
+  const pageCount = Math.ceil(total / BILLS_PAGE_SIZE);
+  const hasPrev = page > 0;
+  const hasNext = page < pageCount - 1;
+
+  return (
+    <section className="space-y-3">
+      <h2 className="text-lg font-medium">Bills</h2>
+      {isPending && (
+        <p className="text-sm text-muted-foreground">Loading bills…</p>
+      )}
+      {isError && (
+        <p className="text-sm text-destructive">{getErrorMessage(error)}</p>
+      )}
+      {data &&
+        (data.items.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No bills for this lease yet.
+          </p>
+        ) : (
+          <>
+            <div
+              className={
+                "overflow-x-auto rounded-lg border" +
+                (isPlaceholderData ? " opacity-60" : "")
+              }
+            >
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/50">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium">Date</th>
+                    <th className="px-4 py-3 text-right font-medium">Amount</th>
+                    <th className="px-4 py-3 text-left font-medium">Created</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.items.map((bill) => (
+                    <tr key={bill.id} className="border-b last:border-0">
+                      <td className="px-4 py-3">
+                        <Link
+                          to="/bills/$billId"
+                          params={{ billId: bill.id }}
+                          className="font-medium text-primary hover:underline"
+                        >
+                          {formatDate(bill.date)}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        {amountFormatter.format(
+                          bill.items.reduce((sum, item) => sum + item.amount, 0),
+                        )}
+                      </td>
+                      <td className="px-4 py-3">{formatDate(bill.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {pageCount > 1 && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Page {page + 1} of {pageCount}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!hasPrev}
+                    onClick={() => setPage((p) => p - 1)}
+                  >
+                    <ChevronLeft />
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!hasNext}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Next
+                    <ChevronRight />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
+        ))}
+    </section>
   );
 }
 

@@ -9,6 +9,7 @@ export {
   billQueries,
   useBills,
   useBill,
+  useLeaseBills,
   useCreateBill,
   BILLS_PAGE_SIZE,
 } from "./api/bills.queries";

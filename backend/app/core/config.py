@@ -44,6 +44,20 @@ class Settings(BaseSettings):
     # stored media can be linked directly without presigning.
     media_public_base_url: str = "https://pub-eb0cc2b35c414d9ba39e9476e0f7c864.r2.dev"
 
+    # M-Pesa / Safaricom Daraja API. Consumer credentials come from the Daraja
+    # developer portal and must be set per environment. ``mpesa_base_url``
+    # defaults to the sandbox; production is "https://api.safaricom.co.ke".
+    mpesa_base_url: str = "https://sandbox.safaricom.co.ke"
+    mpesa_consumer_key: str | None = None
+    mpesa_consumer_secret: str | None = None
+    mpesa_short_code: str | None = None
+    mpesa_passkey: str | None = None
+    # Public HTTPS URL Daraja posts STK push results to.
+    mpesa_callback_url: str | None = None
+    # Shared secret embedded in the callback URL and verified on incoming
+    # results, so only Daraja pushes we initiated can reconcile a request.
+    mpesa_callback_secret: str | None = None
+
     @property
     def is_production(self) -> bool:
         return self.environment == "production"

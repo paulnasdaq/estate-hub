@@ -23,15 +23,18 @@ import {
 import { useOrganizations } from "@/features/organizations";
 import { useCreatePerson } from "../api/people.queries";
 import { personFormSchema, type PersonFormValues } from "../schemas";
+import type { Person } from "../types";
 
 // Presentational + mutation logic only. The parent decides what happens after a
 // successful create (e.g. navigate back to the list) via `onCreated`, which
-// keeps this component testable without a router.
+// receives the newly created person so callers can act on it (e.g. select it in
+// a picker). Keeping the callback here keeps this component testable without a
+// router.
 export function PersonForm({
   onCreated,
   onCancel,
 }: {
-  onCreated: () => void;
+  onCreated: (person: Person) => void;
   onCancel?: () => void;
 }) {
   const organizations = useOrganizations();
@@ -50,7 +53,7 @@ export function PersonForm({
 
   async function onSubmit(values: PersonFormValues) {
     try {
-      await createPerson.mutateAsync({
+      const person = await createPerson.mutateAsync({
         first_name: values.first_name,
         last_name: values.last_name,
         email: values.email,
@@ -59,7 +62,7 @@ export function PersonForm({
         organization_id: values.organization_id,
       });
       toast.success("Person created");
-      onCreated();
+      onCreated(person);
     } catch (error) {
       toast.error(getErrorMessage(error));
     }

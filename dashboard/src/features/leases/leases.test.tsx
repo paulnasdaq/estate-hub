@@ -95,6 +95,6 @@ describe("LeasesPage", () => {
 
     renderPage();
 
-    expect(await screen.findByText("No leases yet.")).toBeInTheDocument();
+    expect(await screen.findByText("No leases yet")).toBeInTheDocument();
   });
 });

@@ -146,4 +146,18 @@ describe("PropertiesPage", () => {
 
     expect(await screen.findByText(/No properties match/)).toBeInTheDocument();
   });
+
+  test("shows an empty state with a call to action when there are no properties", async () => {
+    server.use(
+      http.get("*/api/v1/properties", () =>
+        HttpResponse.json({ items: [], total: 0, limit: 50, offset: 0 }),
+      ),
+    );
+
+    renderPage();
+
+    expect(await screen.findByText("No properties yet")).toBeInTheDocument();
+    // The header CTA plus the empty-state CTA both link to the new page.
+    expect(screen.getAllByRole("link", { name: /Add property/ })).toHaveLength(2);
+  });
 });

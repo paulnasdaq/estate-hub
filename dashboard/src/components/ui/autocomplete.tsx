@@ -3,7 +3,14 @@ import { useId, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
-export type AutocompleteItem = { id: string; label: string };
+// `label` is what identifies the item (and what the parent typically echoes
+// into the input on select); `description` is optional secondary text shown
+// muted alongside it in the dropdown (e.g. a price) without affecting selection.
+export type AutocompleteItem = {
+  id: string;
+  label: string;
+  description?: string;
+};
 
 // A minimal typeahead: a text input backed by an absolutely-positioned list of
 // suggestions. It is fully controlled — the parent owns the query text (to feed
@@ -83,11 +90,16 @@ export function Autocomplete({
                   setOpen(false);
                 }}
                 className={cn(
-                  "cursor-pointer rounded-sm px-2 py-1.5",
+                  "flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5",
                   "hover:bg-accent hover:text-accent-foreground",
                 )}
               >
-                {item.label}
+                <span className="truncate">{item.label}</span>
+                {item.description && (
+                  <span className="ml-auto shrink-0 text-muted-foreground">
+                    {item.description}
+                  </span>
+                )}
               </li>
             ))
           )}

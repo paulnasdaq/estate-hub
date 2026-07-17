@@ -1,11 +1,19 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, DoorClosed, Plus, Search } from "lucide-react";
 
 import { getErrorMessage } from "@/core/errors";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { UNITS_PAGE_SIZE, usePropertyUnits } from "../api/units.queries";
 
@@ -119,12 +127,41 @@ export function PropertyUnits({ propertyId }: { propertyId: string }) {
               </div>
             )}
           </>
+        ) : debouncedSearch ? (
+          <Empty className="border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Search />
+              </EmptyMedia>
+              <EmptyTitle>No units found</EmptyTitle>
+              <EmptyDescription>
+                No units match “{debouncedSearch}”. Try a different search.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            {debouncedSearch
-              ? `No units match “${debouncedSearch}”.`
-              : "No units yet."}
-          </p>
+          <Empty className="border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <DoorClosed />
+              </EmptyMedia>
+              <EmptyTitle>No units yet</EmptyTitle>
+              <EmptyDescription>
+                Get started by adding your first unit.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button asChild size="sm">
+                <Link
+                  to="/properties/$propertyId/units/new"
+                  params={{ propertyId }}
+                >
+                  <Plus />
+                  Add unit
+                </Link>
+              </Button>
+            </EmptyContent>
+          </Empty>
         ))}
     </section>
   );

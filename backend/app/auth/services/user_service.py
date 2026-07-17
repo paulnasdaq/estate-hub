@@ -1,10 +1,10 @@
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.auth import models, schemas
-from app.auth.exceptions import EmailAlreadyExistsError
+from app.auth.exceptions import EmailAlreadyExistsError, UserNotFoundError
 from app.organizations.exceptions import OrganizationNotFoundError
 from app.organizations.models import Organization
 
@@ -15,16 +15,38 @@ class UserService:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def list(self, limit: int, offset: int) -> tuple[list[models.User], int]:
-        """Return a page of active users and the total active count."""
-        active = models.User.deleted_at.is_(None)
+    def get(self, user_id: uuid.UUID) -> models.User:
+        """Fetch a non-deleted user or raise UserNotFoundError."""
+        user = self.db.get(models.User, user_id)
+        if user is None or user.deleted_at is not None:
+            raise UserNotFoundError(user_id)
+        return user
+
+    def list(
+        self, limit: int, offset: int, search: str | None = None
+    ) -> tuple[list[models.User], int]:
+        """Return a page of active users and the matching total count.
+
+        ``search`` filters on a case-insensitive substring of the first name,
+        last name, or email.
+        """
+        filters = [models.User.deleted_at.is_(None)]
+        if search:
+            term = f"%{search}%"
+            filters.append(
+                or_(
+                    models.User.first_name.ilike(term),
+                    models.User.last_name.ilike(term),
+                    models.User.email.ilike(term),
+                )
+            )
         total = self.db.scalar(
-            select(func.count()).select_from(models.User).where(active)
+            select(func.count()).select_from(models.User).where(*filters)
         )
         items = list(
             self.db.scalars(
                 select(models.User)
-                .where(active)
+                .where(*filters)
                 .order_by(models.User.created_at.desc())
                 .limit(limit)
                 .offset(offset)

@@ -16,7 +16,7 @@ class MediaNotFoundError(NotFoundError):
 class MediaFileNotFoundError(AppError):
     """Raised when creating media whose object is not present in storage."""
 
-    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
     code = "media_file_missing"
 
     def __init__(self, storage_key: str) -> None:

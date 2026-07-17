@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import {
   createColumnHelper,
   flexRender,
@@ -16,6 +17,15 @@ const columns = [
   columnHelper.accessor((row) => `${row.first_name} ${row.last_name}`, {
     id: "name",
     header: "Name",
+    cell: (info) => (
+      <Link
+        to="/people/$personId"
+        params={{ personId: info.row.original.id }}
+        className="font-medium text-primary hover:underline"
+      >
+        {info.getValue()}
+      </Link>
+    ),
   }),
   columnHelper.accessor("email", { header: "Email" }),
   columnHelper.accessor("phone", {

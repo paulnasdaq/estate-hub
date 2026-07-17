@@ -45,6 +45,22 @@ export const billQueries = {
           }),
         ),
     }),
+
+  forLease: (leaseId: string, params: BillListParams) =>
+    queryOptions({
+      // Scoped to the lease and page so it caches separately from the global
+      // bills list and each page of it.
+      queryKey: [...billQueries.all, "for-lease", leaseId, params],
+      queryFn: () =>
+        unwrap(
+          api.GET("/api/v1/leases/{lease_id}/bills", {
+            params: {
+              path: { lease_id: leaseId },
+              query: { limit: params.limit, offset: params.offset },
+            },
+          }),
+        ),
+    }),
 };
 
 export function useBills(params: { page: number }) {
@@ -61,6 +77,18 @@ export function useBills(params: { page: number }) {
 
 export function useBill(billId: string) {
   return useQuery(billQueries.detail(billId));
+}
+
+export function useLeaseBills(leaseId: string, params: { page: number }) {
+  return useQuery({
+    ...billQueries.forLease(leaseId, {
+      limit: BILLS_PAGE_SIZE,
+      offset: params.page * BILLS_PAGE_SIZE,
+    }),
+    // Keep the previous page's rows visible while a new page resolves, so the
+    // table doesn't flash empty on every page change.
+    placeholderData: keepPreviousData,
+  });
 }
 
 export function useCreateBill() {

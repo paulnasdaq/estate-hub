@@ -2,6 +2,7 @@ import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import {
   Building2,
+  CreditCard,
   Home,
   LayoutDashboard,
   Network,
@@ -38,6 +39,7 @@ const navItems = [
   { title: "People", to: "/people", icon: Users, exact: false },
   { title: "Leases", to: "/leases", icon: ScrollText, exact: false },
   { title: "Bills", to: "/bills", icon: Receipt, exact: false },
+  { title: "Payments", to: "/payments", icon: CreditCard, exact: false },
 ] as const;
 
 export function RootLayout() {

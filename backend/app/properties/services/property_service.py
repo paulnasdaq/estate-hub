@@ -5,7 +5,10 @@ from sqlalchemy.orm import Session
 
 from app.core.database import utcnow
 from app.properties import models, schemas
-from app.properties.exceptions import PropertyNotFoundError
+from app.properties.exceptions import (
+    PropertyNameConflictError,
+    PropertyNotFoundError,
+)
 
 
 class PropertyService:
@@ -60,6 +63,7 @@ class PropertyService:
         return items, total or 0
 
     def create(self, payload: schemas.PropertyCreate) -> models.Property:
+        self._require_unique_name(payload.name, payload.organization_id)
         prop = models.Property(**payload.model_dump())
         self.db.add(prop)
         self.db.commit()
@@ -69,7 +73,15 @@ class PropertyService:
     def update(
         self, prop: models.Property, payload: schemas.PropertyUpdate
     ) -> models.Property:
-        for field, value in payload.model_dump(exclude_unset=True).items():
+        data = payload.model_dump(exclude_unset=True)
+        # Re-validate uniqueness against the effective name/org after the update.
+        if "name" in data or "organization_id" in data:
+            self._require_unique_name(
+                data.get("name", prop.name),
+                data.get("organization_id", prop.organization_id),
+                exclude_id=prop.id,
+            )
+        for field, value in data.items():
             setattr(prop, field, value)
         self.db.commit()
         self.db.refresh(prop)
@@ -79,3 +91,24 @@ class PropertyService:
         """Soft-delete a property by setting deleted_at."""
         prop.deleted_at = utcnow()
         self.db.commit()
+
+    def _require_unique_name(
+        self,
+        name: str,
+        organization_id: uuid.UUID,
+        exclude_id: uuid.UUID | None = None,
+    ) -> None:
+        """Raise if another active property in the org already has this name.
+
+        Backs the ``uq_properties_org_name`` partial unique index with a
+        friendly 409 instead of a raw IntegrityError.
+        """
+        stmt = select(models.Property.id).where(
+            models.Property.organization_id == organization_id,
+            models.Property.name == name,
+            models.Property.deleted_at.is_(None),
+        )
+        if exclude_id is not None:
+            stmt = stmt.where(models.Property.id != exclude_id)
+        if self.db.scalar(stmt.limit(1)) is not None:
+            raise PropertyNameConflictError(name, organization_id)

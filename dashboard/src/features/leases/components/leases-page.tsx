@@ -1,9 +1,17 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, ScrollText } from "lucide-react";
 import { useState } from "react";
 
 import { getErrorMessage } from "@/core/errors";
 import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { LEASES_PAGE_SIZE, useLeases } from "../api/leases.queries";
 import { LeaseTable } from "./lease-table";
 
@@ -73,7 +81,25 @@ export function LeasesPage() {
             )}
           </>
         ) : (
-          <p className="text-sm text-muted-foreground">No leases yet.</p>
+          <Empty className="border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <ScrollText />
+              </EmptyMedia>
+              <EmptyTitle>No leases yet</EmptyTitle>
+              <EmptyDescription>
+                Get started by adding your first lease.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button asChild size="sm">
+                <Link to="/leases/new">
+                  <Plus />
+                  Add lease
+                </Link>
+              </Button>
+            </EmptyContent>
+          </Empty>
         ))}
     </div>
   );

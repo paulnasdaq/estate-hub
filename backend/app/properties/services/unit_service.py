@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import utcnow
 from app.properties import models, schemas
-from app.properties.exceptions import UnitNotFoundError
+from app.properties.exceptions import UnitNameConflictError, UnitNotFoundError
 
 
 class UnitService:
@@ -82,6 +82,7 @@ class UnitService:
         return items, total or 0
 
     def create(self, payload: schemas.UnitCreate) -> models.Unit:
+        self._require_unique_name(payload.name, payload.property_id)
         unit = models.Unit(**payload.model_dump())
         self.db.add(unit)
         self.db.commit()
@@ -89,7 +90,15 @@ class UnitService:
         return unit
 
     def update(self, unit: models.Unit, payload: schemas.UnitUpdate) -> models.Unit:
-        for field, value in payload.model_dump(exclude_unset=True).items():
+        data = payload.model_dump(exclude_unset=True)
+        # Re-validate uniqueness against the effective name/property after update.
+        if "name" in data or "property_id" in data:
+            self._require_unique_name(
+                data.get("name", unit.name),
+                data.get("property_id", unit.property_id),
+                exclude_id=unit.id,
+            )
+        for field, value in data.items():
             setattr(unit, field, value)
         self.db.commit()
         self.db.refresh(unit)
@@ -99,3 +108,24 @@ class UnitService:
         """Soft-delete a unit by setting deleted_at."""
         unit.deleted_at = utcnow()
         self.db.commit()
+
+    def _require_unique_name(
+        self,
+        name: str,
+        property_id: uuid.UUID,
+        exclude_id: uuid.UUID | None = None,
+    ) -> None:
+        """Raise if another active unit in the property already has this name.
+
+        Backs the ``uq_units_property_name`` partial unique index with a
+        friendly 409 instead of a raw IntegrityError.
+        """
+        stmt = select(models.Unit.id).where(
+            models.Unit.property_id == property_id,
+            models.Unit.name == name,
+            models.Unit.deleted_at.is_(None),
+        )
+        if exclude_id is not None:
+            stmt = stmt.where(models.Unit.id != exclude_id)
+        if self.db.scalar(stmt.limit(1)) is not None:
+            raise UnitNameConflictError(name, property_id)

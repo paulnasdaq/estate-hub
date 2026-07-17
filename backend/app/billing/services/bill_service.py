@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 
 from sqlalchemy import func, select
@@ -42,6 +44,28 @@ class BillService:
         )
         return items, total or 0
     
+    def list_for_lease(
+        self, lease_id: uuid.UUID, limit: int, offset: int
+    ) -> tuple[list[models.Bill], int]:
+        """Return a page of active bills for one lease and the total count."""
+        active = (
+            models.Bill.deleted_at.is_(None),
+            models.Bill.lease_id == lease_id,
+        )
+        total = self.db.scalar(
+            select(func.count()).select_from(models.Bill).where(*active)
+        )
+        items = list(
+            self.db.scalars(
+                select(models.Bill)
+                .where(*active)
+                .order_by(models.Bill.created_at.desc())
+                .limit(limit)
+                .offset(offset)
+            )
+        )
+        return items, total or 0
+
     def create_from_lease(self, lease_id: uuid.UUID) -> models.Bill | None:
         """Bill a lease for every service period that has come due since it was
         last billed, up to today. Returns the new bill, or None if nothing is
