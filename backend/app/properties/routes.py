@@ -74,9 +74,7 @@ def delete_property(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@property_router.get(
-    "/{property_id}/units", response_model=Page[schemas.UnitRead]
-)
+@property_router.get("/{property_id}/units", response_model=Page[schemas.UnitRead])
 def list_property_units(
     pagination: PaginationParams = Depends(),
     search: str | None = Query(
@@ -109,15 +107,11 @@ def create_property_unit(
     # The property comes from the path (validated by the dependency); the body
     # only carries the unit's own fields.
     return UnitService(db).create(
-        schemas.UnitCreate(
-            name=payload.name, price=payload.price, property_id=prop.id
-        )
+        schemas.UnitCreate(name=payload.name, price=payload.price, property_id=prop.id)
     )
 
 
-@property_router.get(
-    "/{property_id}/media", response_model=Page[MediaWithUrl]
-)
+@property_router.get("/{property_id}/media", response_model=Page[MediaWithUrl])
 def list_property_media(
     pagination: PaginationParams = Depends(),
     prop: models.Property = Depends(get_property_or_404),

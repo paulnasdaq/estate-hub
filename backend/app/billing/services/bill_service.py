@@ -43,7 +43,7 @@ class BillService:
             )
         )
         return items, total or 0
-    
+
     def list_for_lease(
         self, lease_id: uuid.UUID, limit: int, offset: int
     ) -> tuple[list[models.Bill], int]:

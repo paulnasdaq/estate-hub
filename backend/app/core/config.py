@@ -1,6 +1,10 @@
-from typing import Literal
+import json
+from typing import Annotated, Literal
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+SameSite = Literal["strict", "lax", "none"]
 
 Environment = Literal["local", "test", "staging", "production"]
 
@@ -57,6 +61,78 @@ class Settings(BaseSettings):
     # Shared secret embedded in the callback URL and verified on incoming
     # results, so only Daraja pushes we initiated can reconcile a request.
     mpesa_callback_secret: str | None = None
+
+    # Mailgun transactional email. The API key and sending domain come from the
+    # Mailgun dashboard and must be set per environment; when either is unset,
+    # the mailer no-ops (and logs) rather than failing a task. ``mailgun_base_url``
+    # defaults to the US region — use "https://api.eu.mailgun.net" for the EU
+    # region. ``mail_from`` is the envelope sender, e.g.
+    # "Housing <billing@mg.example.com>".
+    mailgun_api_key: str | None = None
+    mailgun_domain: str | None = None
+    mailgun_base_url: str = "https://api.mailgun.net"
+    mail_from: str = "Housing <billing@localhost>"
+
+    # Receipt / invoice presentation. Amounts are stored as whole integers, so
+    # the currency here is just the display prefix. ``receipt_company_name`` is
+    # the "from" name used when a lease's account has no organization.
+    receipt_currency: str = "KES"
+    receipt_company_name: str = "Housing"
+
+    # Authentication. ``jwt_secret`` signs and verifies every token (login and
+    # account-activation) and MUST be overridden per environment — the default
+    # here is only safe for local dev. Access tokens are stateless HS256 JWTs
+    # kept deliberately short-lived; sessions are extended by the refresh token
+    # below, so ``access_token_ttl_minutes`` bounds how long a stolen access
+    # token stays valid. ``activation_token_ttl_hours`` bounds the emailed
+    # account-activation link.
+    jwt_secret: str = "dev-insecure-change-me"
+    jwt_algorithm: str = "HS256"
+    access_token_ttl_minutes: int = 15
+    activation_token_ttl_hours: int = 48
+    # Password-reset links are short-lived: a reset grants a new password, so the
+    # window for a leaked link to be used should be small.
+    password_reset_ttl_hours: int = 1
+
+    # Refresh tokens are opaque, revocable, and stored hashed server-side (see
+    # auth/models/refresh_token.py). Delivered as an HttpOnly cookie, they let the
+    # frontend mint a fresh access token without re-login until this TTL lapses.
+    # The cookie is marked Secure only in production so it still works over plain
+    # http on localhost in development.
+    refresh_token_ttl_days: int = 14
+    refresh_cookie_name: str = "refresh_token"
+    # SameSite policy for the refresh cookie. "strict" is safest and correct for a
+    # same-origin deployment (dashboard and API on one host). A cross-origin
+    # deployment (dashboard on a different host than the API — see
+    # ``cors_origins``) requires "none", which browsers only honour on a Secure
+    # cookie, so "none" forces Secure on regardless of environment.
+    refresh_cookie_samesite: SameSite = "strict"
+
+    # Cross-origin dashboards allowed to make credentialed (cookie-bearing) calls.
+    # Leave empty for a same-origin deployment (the dashboard behind the same host
+    # with ``/api`` proxied), where no CORS headers are needed. Otherwise list each
+    # dashboard origin, e.g. "https://app.example.com". The CORS spec forbids the
+    # "*" wildcard together with credentials, so origins must be explicit. Accepts
+    # a comma-separated string or a JSON list from the environment. ``NoDecode``
+    # stops pydantic-settings from JSON-parsing the env value itself, so the
+    # validator below can accept the friendlier comma-separated form too.
+    cors_origins: Annotated[list[str], NoDecode] = []
+
+    # Base URL of the dashboard frontend, used to build links in emails (e.g. the
+    # account-activation link). No trailing slash. Defaults to the Vite dev
+    # server; override per environment.
+    frontend_base_url: str = "http://localhost:5173"
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _split_cors_origins(cls, value: object) -> object:
+        """Parse ``CORS_ORIGINS`` from a comma-separated string or a JSON list."""
+        if isinstance(value, str):
+            value = value.strip()
+            if value.startswith("["):
+                return json.loads(value)
+            return [origin.strip() for origin in value.split(",") if origin.strip()]
+        return value
 
     @property
     def is_production(self) -> bool:

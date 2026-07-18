@@ -5,16 +5,16 @@ Revises: c7e91a4b0d23
 Create Date: 2026-07-10 23:45:37.089681
 
 """
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
 
 from alembic import op
 
-
 # revision identifiers, used by Alembic.
-revision: str = '8f4a6197f3fc'
-down_revision: str | Sequence[str] | None = 'c7e91a4b0d23'
+revision: str = "8f4a6197f3fc"
+down_revision: str | Sequence[str] | None = "c7e91a4b0d23"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

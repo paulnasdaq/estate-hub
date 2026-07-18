@@ -11,9 +11,12 @@ dependencies = [
     "fastapi[standard]>=0.139.0",
     "flower>=2.0",
     "psycopg[binary]>=3.2",
+    "pwdlib[argon2]>=0.3.0",
     "pydantic[email]>=2.0",
+    "pyjwt>=2.13.0",
     "redis>=5.0",
     "sqlalchemy>=2.0.51",
+    "weasyprint>=69.0",
 ]
 
 [dependency-groups]

@@ -99,9 +99,7 @@ def test_no_filters_returns_everything(client: TestClient) -> None:
     assert body["total"] == 2
 
 
-def test_list_defaults_to_newest_first(
-    client: TestClient, db_session: Session
-) -> None:
+def test_list_defaults_to_newest_first(client: TestClient, db_session: Session) -> None:
     old_id = _create_property(client, name="Older")
     new_id = _create_property(client, name="Newer")
 

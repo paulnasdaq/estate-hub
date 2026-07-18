@@ -42,20 +42,14 @@ def test_presign_video_key_uses_videos_folder(client: TestClient) -> None:
     property_id = _create_property(client)
     resp = _presign(client, property_id, "tour.mp4", "video/mp4")
     assert resp.status_code == 200
-    assert (
-        resp.json()["storage_key"]
-        == f"properties/{property_id}/videos/tour.mp4"
-    )
+    assert resp.json()["storage_key"] == f"properties/{property_id}/videos/tour.mp4"
 
 
 def test_presign_other_key_uses_files_folder(client: TestClient) -> None:
     property_id = _create_property(client)
     resp = _presign(client, property_id, "lease.pdf", "application/pdf")
     assert resp.status_code == 200
-    assert (
-        resp.json()["storage_key"]
-        == f"properties/{property_id}/files/lease.pdf"
-    )
+    assert resp.json()["storage_key"] == f"properties/{property_id}/files/lease.pdf"
 
 
 def test_presign_unknown_property_is_404(client: TestClient) -> None:

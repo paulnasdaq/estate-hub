@@ -55,9 +55,7 @@ class PaymentRequestService:
         if payload.status is PaymentStatus.PENDING:
             self._require_no_pending_request(bill_id)
 
-        payment_request = models.PaymentRequest(
-            bill_id=bill_id, status=payload.status
-        )
+        payment_request = models.PaymentRequest(bill_id=bill_id, status=payload.status)
         self.db.add(payment_request)
         try:
             self.db.commit()

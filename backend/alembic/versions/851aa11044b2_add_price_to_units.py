@@ -26,9 +26,7 @@ def upgrade() -> None:
     # model (which declares no server default).
     with op.batch_alter_table("units", schema=None) as batch_op:
         batch_op.add_column(
-            sa.Column(
-                "price", sa.Integer(), nullable=False, server_default="0"
-            )
+            sa.Column("price", sa.Integer(), nullable=False, server_default="0")
         )
     with op.batch_alter_table("units", schema=None) as batch_op:
         batch_op.alter_column("price", server_default=None)

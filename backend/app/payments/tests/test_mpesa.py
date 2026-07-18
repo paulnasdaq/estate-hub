@@ -369,9 +369,7 @@ def test_send_stk_rejected_response_marks_request_failed(
 
 def test_send_stk_non_200_marks_request_failed(db_session: Session) -> None:
     request_id = _seed_request(db_session)
-    handler = _stk_handler(
-        stk_json={"errorMessage": "Bad Request"}, stk_status=400
-    )
+    handler = _stk_handler(stk_json={"errorMessage": "Bad Request"}, stk_status=400)
     svc = MPesaService(
         db=db_session,
         redis_client=_prefilled_redis(),
@@ -443,9 +441,7 @@ def test_encode_password() -> None:
 
     encoded = svc.encode_password("20260715120000")
 
-    assert encoded == base64.b64encode(
-        b"174379passkey20260715120000"
-    ).decode()
+    assert encoded == base64.b64encode(b"174379passkey20260715120000").decode()
 
 
 # --- process_stk_response -------------------------------------------------
@@ -465,9 +461,7 @@ def _stk_callback(result_code: int, *, amount: int | None = None) -> dict:
 
 
 def _payments_for(db: Session, request_id: uuid.UUID) -> list[Payment]:
-    return (
-        db.query(Payment).filter(Payment.payment_request_id == request_id).all()
-    )
+    return db.query(Payment).filter(Payment.payment_request_id == request_id).all()
 
 
 def test_process_stk_response_success_records_payment(db_session: Session) -> None:
@@ -547,9 +541,7 @@ def test_process_stk_response_is_idempotent_for_success(
 def test_send_stk_callback_url_includes_signature(
     db_session: Session, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(
-        "app.core.config.settings.mpesa_callback_secret", "cb-secret"
-    )
+    monkeypatch.setattr("app.core.config.settings.mpesa_callback_secret", "cb-secret")
     request_id = _seed_request(db_session)
     captured: dict[str, httpx.Request] = {}
     handler = _stk_handler(stk_json={"ResponseCode": "0"}, captured=captured)

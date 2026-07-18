@@ -25,9 +25,7 @@ payment_router = APIRouter(prefix="/payments", tags=["payments"])
 bill_payment_request_router = APIRouter(prefix="/bills", tags=["payments"])
 
 # M-Pesa (Daraja) integration callbacks.
-mpesa_router = APIRouter(
-    prefix="/payments/integrations/mpesa/stk", tags=["payments"]
-)
+mpesa_router = APIRouter(prefix="/payments/integrations/mpesa/stk", tags=["payments"])
 
 
 @payment_router.get("", response_model=Page[schemas.PaymentRead])
@@ -72,9 +70,7 @@ def verify_mpesa_callback(
         raise MPesaCallbackAuthError()
 
 
-@mpesa_router.post(
-    "/process-responses", dependencies=[Depends(verify_mpesa_callback)]
-)
+@mpesa_router.post("/process-responses", dependencies=[Depends(verify_mpesa_callback)])
 def process_stk_response(
     payment_request_id: uuid.UUID,
     payload: dict[str, Any],

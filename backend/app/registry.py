@@ -2,6 +2,13 @@
 
 Alembic's autogenerate and any create_all rely on all models being imported.
 Add each new feature's models module here.
+
+Any process that touches the ORM must import this module during startup, so
+that string-based relationships (e.g. ``UserAccount.organization``) can resolve
+their target classes when mappers are configured. The FastAPI app does this in
+``app.main`` and the Celery worker in ``app.core.celery_app``; a new entrypoint
+that runs queries must do the same or the first ORM call will raise an
+``InvalidRequestError`` about a name it "failed to locate".
 """
 
 from app.auth import models as auth_models  # noqa: F401

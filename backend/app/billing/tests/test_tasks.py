@@ -19,9 +19,7 @@ TODAY = datetime(2026, 7, 14, tzinfo=UTC)
 
 @pytest.fixture(autouse=True)
 def _freeze_today(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(
-        "app.billing.services.bill_service.utcnow", lambda: TODAY
-    )
+    monkeypatch.setattr("app.billing.services.bill_service.utcnow", lambda: TODAY)
 
 
 def _lease_with_rent(
@@ -60,19 +58,20 @@ def test_bills_only_active_leases(db_session: Session) -> None:
     _lease_with_rent(db_session, terminated_on=datetime(2026, 5, 1, tzinfo=UTC))
     _lease_with_rent(db_session, deleted=True)
 
-    billed = generate_bills_for_active_leases(db_session)
+    created = generate_bills_for_active_leases(db_session)
 
-    assert billed == 1
+    assert len(created) == 1
     bills = db_session.query(Bill).all()
     assert len(bills) == 1
     assert bills[0].lease_id == active.id
+    assert created == [bills[0].id]
 
 
 def test_lease_with_nothing_due_is_skipped(db_session: Session) -> None:
     # Active but starts in the future: no bill should be created.
     _lease_with_rent(db_session, effective_from=datetime(2026, 9, 1, tzinfo=UTC))
 
-    assert generate_bills_for_active_leases(db_session) == 0
+    assert generate_bills_for_active_leases(db_session) == []
     assert db_session.query(Bill).count() == 0
 
 
@@ -91,10 +90,10 @@ def test_one_failing_lease_does_not_abort_the_run(
 
     monkeypatch.setattr(tasks.BillService, "create_from_lease", flaky_create)
 
-    billed = generate_bills_for_active_leases(db_session)
+    created = generate_bills_for_active_leases(db_session)
 
     # The good lease is still billed despite the other one blowing up.
-    assert billed == 1
+    assert len(created) == 1
     assert db_session.query(Bill).count() == 1
 
 
@@ -109,5 +108,11 @@ def test_nightly_task_runs_eagerly(
 
     monkeypatch.setattr(tasks, "session_scope", fake_scope)
 
+    # Record enqueues instead of running the receipt/email pipeline (which would
+    # render a PDF and hit storage); that path is covered in test_notifications.
+    enqueued: list = []
+    monkeypatch.setattr(tasks, "enqueue_bill_receipt_and_notification", enqueued.append)
+
     result = generate_nightly_bills.delay().get()
     assert result == 1
+    assert len(enqueued) == 1

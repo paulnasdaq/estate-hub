@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invoice {{ invoice.number }}</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: 'Helvetica Neue', 'IBM Plex Sans', -apple-system, sans-serif;
+    color: #201d1a;
+    background: #efece4;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .sheet {
+    width: 820px;
+    margin: 56px auto;
+    background: #fbfaf6;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(40,34,28,.06), 0 24px 60px -24px rgba(40,34,28,.22);
+  }
+  .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 32px; padding: 52px 56px 36px; }
+  .from-block { display: flex; flex-direction: column; gap: 18px; }
+  .logo { width: 132px; height: 60px; object-fit: contain; object-position: left center; }
+  .logo-fallback { width: 132px; height: 60px; display: flex; align-items: center; font-size: 20px; font-weight: 600; color: #201d1a; }
+  .from-lines { max-width: 230px; font-size: 12.5px; line-height: 1.65; color: #6b6459; }
+  .from-name { font-weight: 600; color: #201d1a; font-size: 13.5px; margin-bottom: 2px; }
+  .doc-title { font-size: 40px; font-weight: 500; letter-spacing: .14em; line-height: 1; text-align: right; }
+  .meta { margin-top: 22px; font-size: 12.5px; line-height: 1.9; color: #6b6459; text-align: right; }
+  .meta-row { display: flex; gap: 18px; justify-content: flex-end; }
+  .meta-row .v { color: #201d1a; font-weight: 500; min-width: 96px; text-align: right; }
+  .rule { height: 1px; background: #e4dfd4; margin: 0 56px; }
+  .label { font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: #a49c8e; }
+  .billed { padding: 30px 56px 8px; }
+  .billed .lines { font-size: 13px; line-height: 1.7; color: #6b6459; margin-top: 10px; }
+  .billed .name { font-weight: 600; color: #201d1a; font-size: 15px; margin-bottom: 2px; }
+  .items { padding: 26px 56px 0; }
+  table.items-table { width: 100%; border-collapse: collapse; }
+  table.items-table th { font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: #a49c8e; font-weight: 400; text-align: left; padding-bottom: 10px; border-bottom: 1px solid #201d1a; }
+  table.items-table td { padding: 13px 0; border-bottom: 1px solid #ece7dd; font-size: 13.5px; vertical-align: top; }
+  .r { text-align: right; }
+  .tnum { font-variant-numeric: tabular-nums; }
+  .period { font-size: 12px; color: #6b6459; }
+  .totals { display: flex; justify-content: flex-end; padding: 28px 56px 0; }
+  .totals .box { width: 300px; font-size: 13px; }
+  .totals .line { display: flex; justify-content: space-between; padding: 7px 0; color: #6b6459; }
+  .totals .line .v { color: #201d1a; font-variant-numeric: tabular-nums; }
+  .total-due { display: flex; justify-content: space-between; align-items: baseline; margin-top: 8px; padding: 16px 18px; background: #201d1a; border-radius: 6px; color: #fbfaf6; }
+  .total-due .k { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #b3a68f; }
+  .total-due .v { font-size: 26px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .footer { margin: 40px 56px 0; padding: 24px 0 52px; border-top: 1px solid #e4dfd4; display: flex; gap: 48px; justify-content: space-between; }
+  .footer .col { flex: 1; }
+  .footer .body { font-size: 12.5px; line-height: 1.7; color: #6b6459; margin-top: 8px; }
+  @media print {
+    body { background: #fff; }
+    .sheet { margin: 0 auto; box-shadow: none; border-radius: 0; }
+    @page { size: A4; margin: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  {# ---------- Header ---------- #}
+  <div class="top">
+    <div class="from-block">
+      {% if organization.logo_url %}
+        <img class="logo" src="{{ organization.logo_url }}" alt="{{ organization.name }}">
+      {% else %}
+        <div class="logo-fallback">{{ organization.name }}</div>
+      {% endif %}
+      <div class="from-lines">
+        <div class="from-name">{{ organization.name }}</div>
+        {% for line in organization.address_lines %}
+          <div>{{ line }}</div>
+        {% endfor %}
+        {% if organization.email %}<div>{{ organization.email }}</div>{% endif %}
+      </div>
+    </div>
+    <div>
+      <div class="doc-title">INVOICE</div>
+      <div class="meta">
+        <div class="meta-row"><span>Invoice №</span><span class="v">{{ invoice.number }}</span></div>
+        <div class="meta-row"><span>Issued</span><span class="v">{{ invoice.issued_date }}</span></div>
+        {% if invoice.due_date %}<div class="meta-row"><span>Due</span><span class="v">{{ invoice.due_date }}</span></div>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="rule"></div>
+
+  {# ---------- Billed to ---------- #}
+  <div class="billed">
+    <div class="label">Billed to</div>
+    <div class="lines">
+      <div class="name">{{ customer.name }}</div>
+      {% for line in customer.address_lines %}
+        <div>{{ line }}</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# ---------- Line items ---------- #}
+  <div class="items">
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Service period</th>
+          <th class="r">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+          <tr>
+            <td>{{ item.description }}</td>
+            <td class="period">{{ item.period }}</td>
+            <td class="r tnum">{{ currency }} {{ '{:,}'.format(item.amount) }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# ---------- Totals ---------- #}
+  <div class="totals">
+    <div class="box">
+      <div class="line"><span>Subtotal</span><span class="v">{{ currency }} {{ '{:,}'.format(subtotal) }}</span></div>
+      <div class="total-due">
+        <span class="k">Total due</span>
+        <span class="v">{{ currency }} {{ '{:,}'.format(total) }}</span>
+      </div>
+    </div>
+  </div>
+
+  {# ---------- Footer ---------- #}
+  <div class="footer">
+    {% if payment_terms %}
+      <div class="col">
+        <div class="label">Payment</div>
+        <div class="body">{{ payment_terms }}</div>
+      </div>
+    {% endif %}
+    {% if notes %}
+      <div class="col">
+        <div class="label">Notes</div>
+        <div class="body">{{ notes }}</div>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+</body>
+</html>

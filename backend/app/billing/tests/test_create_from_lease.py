@@ -16,9 +16,7 @@ TODAY = datetime(2026, 7, 14, tzinfo=UTC)
 
 @pytest.fixture(autouse=True)
 def _freeze_today(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(
-        "app.billing.services.bill_service.utcnow", lambda: TODAY
-    )
+    monkeypatch.setattr("app.billing.services.bill_service.utcnow", lambda: TODAY)
 
 
 def _lease(

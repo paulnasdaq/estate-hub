@@ -77,9 +77,7 @@ def test_terminal_requests_do_not_block_a_pending_one(
 ) -> None:
     bill_id = _bill(db_session)
     assert client.post(_url(bill_id), json={"status": "failed"}).status_code == 201
-    assert (
-        client.post(_url(bill_id), json={"status": "successful"}).status_code == 201
-    )
+    assert client.post(_url(bill_id), json={"status": "successful"}).status_code == 201
     # A terminal request never occupies the pending slot.
     assert client.post(_url(bill_id), json={}).status_code == 201
 
@@ -138,9 +136,7 @@ def test_list_payments_returns_recorded_payments(
     assert item["payment_request_id"] == str(payment.payment_request_id)
 
 
-def test_list_payments_paginates(
-    client: TestClient, db_session: Session
-) -> None:
+def test_list_payments_paginates(client: TestClient, db_session: Session) -> None:
     for amount in (100, 200, 300):
         _payment(db_session, amount=amount)
 

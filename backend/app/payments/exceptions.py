@@ -22,9 +22,7 @@ class DuplicatePendingPaymentRequestError(ConflictError):
 
     def __init__(self, bill_id: uuid.UUID) -> None:
         self.bill_id = bill_id
-        super().__init__(
-            f"Bill {bill_id} already has a pending payment request"
-        )
+        super().__init__(f"Bill {bill_id} already has a pending payment request")
 
 
 class TenantPhoneMissingError(AppError):

@@ -20,6 +20,4 @@ class Payment(Base):
         Uuid, ForeignKey("payment_requests.id"), index=True
     )
 
-    payment_request: Mapped["PaymentRequest"] = relationship(
-        back_populates="payments"
-    )
+    payment_request: Mapped["PaymentRequest"] = relationship(back_populates="payments")

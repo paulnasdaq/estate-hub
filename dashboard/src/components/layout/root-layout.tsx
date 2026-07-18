@@ -1,20 +1,23 @@
-import { Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import {
   Building2,
   CreditCard,
   Home,
   LayoutDashboard,
+  LogOut,
   Network,
   Receipt,
   ScrollText,
   Users,
 } from "lucide-react";
 
+import { logout } from "@/core/api/refresh";
 import { Separator } from "@/components/ui/separator";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -26,6 +29,14 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+
+// Routes that render on their own, without the sidebar + header app shell.
+const bareRoutes = [
+  "/login",
+  "/activate",
+  "/forgot-password",
+  "/reset-password",
+];
 
 const navItems = [
   { title: "Home", to: "/", icon: Home, exact: true },
@@ -43,6 +54,7 @@ const navItems = [
 ] as const;
 
 export function RootLayout() {
+  const navigate = useNavigate();
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
@@ -50,6 +62,22 @@ export function RootLayout() {
   const activeItem = navItems.find((item) =>
     item.exact ? pathname === item.to : pathname.startsWith(item.to),
   );
+
+  async function handleLogout() {
+    await logout();
+    await navigate({ to: "/login" });
+  }
+
+  // The unauthenticated pages (login, activate) own their full-screen layout, so
+  // render just the routed page without the sidebar shell.
+  if (bareRoutes.includes(pathname)) {
+    return (
+      <>
+        <Outlet />
+        {import.meta.env.DEV && <TanStackRouterDevtools />}
+      </>
+    );
+  }
 
   return (
     <SidebarProvider>
@@ -97,6 +125,17 @@ export function RootLayout() {
           </SidebarGroup>
         </SidebarContent>
 
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={handleLogout} tooltip="Sign out">
+                <LogOut />
+                <span>Sign out</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+
         <SidebarRail />
       </Sidebar>
 
@@ -116,7 +155,7 @@ export function RootLayout() {
         </main>
       </SidebarInset>
 
-      {import.meta.env.DEV && <TanStackRouterDevtools />}
+      {import.meta.env.DEV && <TanStackRouterDevtools position="top-left" />}
     </SidebarProvider>
   );
 }

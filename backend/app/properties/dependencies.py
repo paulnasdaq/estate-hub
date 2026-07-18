@@ -40,9 +40,7 @@ class PropertyFilters:
 
         self.search = search
         self.organization_id = organization_id
-        self.bbox = (
-            bounding_box(lat, lng, radius_km) if radius_km is not None else None
-        )
+        self.bbox = bounding_box(lat, lng, radius_km) if radius_km is not None else None
 
 
 def get_property_or_404(

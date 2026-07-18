@@ -99,9 +99,7 @@ class MediaService:
         """
         return f"{settings.media_public_base_url.rstrip('/')}/{key}"
 
-    def generate_presigned_download_url(
-        self, key: str, expires_in: int = 3600
-    ) -> str:
+    def generate_presigned_download_url(self, key: str, expires_in: int = 3600) -> str:
         """Return a time-limited URL for downloading (GET) the object."""
         return self.s3.generate_presigned_url(
             "get_object",
@@ -134,9 +132,7 @@ class MediaService:
         self.db.refresh(media)
         return media
 
-    def update(
-        self, media: models.Media, payload: schemas.MediaUpdate
-    ) -> models.Media:
+    def update(self, media: models.Media, payload: schemas.MediaUpdate) -> models.Media:
         for field, value in payload.model_dump(exclude_unset=True).items():
             setattr(media, field, value)
         self.db.commit()

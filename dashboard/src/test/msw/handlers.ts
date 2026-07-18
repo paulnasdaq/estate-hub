@@ -165,6 +165,28 @@ export const handlers = [
     },
   ),
 
+  http.post("/api/v1/auth/login", ({ response }) =>
+    response(200).json({ access_token: "test-access-token", token_type: "bearer" }),
+  ),
+
+  http.post("/api/v1/auth/activate", ({ response }) =>
+    response(200).json({ access_token: "test-access-token", token_type: "bearer" }),
+  ),
+
+  http.post("/api/v1/auth/refresh", ({ response }) =>
+    response(200).json({ access_token: "test-access-token", token_type: "bearer" }),
+  ),
+
+  http.post("/api/v1/auth/logout", ({ response }) => response(204).empty()),
+
+  http.post("/api/v1/auth/forgot-password", ({ response }) =>
+    response(204).empty(),
+  ),
+
+  http.post("/api/v1/auth/reset-password", ({ response }) =>
+    response(200).json({ access_token: "test-access-token", token_type: "bearer" }),
+  ),
+
   http.get("/api/v1/users", ({ response }) =>
     response(200).json({ items: [], total: 0, limit: 10, offset: 0 }),
   ),

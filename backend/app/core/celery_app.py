@@ -13,12 +13,14 @@ Tasks live in each feature package's ``tasks`` module (e.g.
 from celery import Celery
 from celery.schedules import crontab
 
+from app import registry  # noqa: F401  (registers all feature models/mappers)
 from app.core.config import settings
 from app.core.logging import configure_logging
 
 # Feature packages that may contain a ``tasks`` module. Celery imports
 # ``<package>.tasks`` for each; a package without one is skipped quietly.
 TASK_PACKAGES = [
+    "app.auth",
     "app.properties",
     "app.leases",
     "app.billing",

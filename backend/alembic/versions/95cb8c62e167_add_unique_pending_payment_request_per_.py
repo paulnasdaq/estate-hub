@@ -5,6 +5,7 @@ Revises: 80ed755ede1d
 Create Date: 2026-07-16 20:36:29.565696
 
 """
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -12,8 +13,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = '95cb8c62e167'
-down_revision: str | Sequence[str] | None = '80ed755ede1d'
+revision: str = "95cb8c62e167"
+down_revision: str | Sequence[str] | None = "80ed755ede1d"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

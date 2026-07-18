@@ -22,6 +22,4 @@ class InvalidBillItemTermError(AppError):
 
     def __init__(self, lease_term_id: uuid.UUID) -> None:
         self.lease_term_id = lease_term_id
-        super().__init__(
-            f"Lease term {lease_term_id} does not belong to this lease"
-        )
+        super().__init__(f"Lease term {lease_term_id} does not belong to this lease")

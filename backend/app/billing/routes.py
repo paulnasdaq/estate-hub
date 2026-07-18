@@ -7,7 +7,7 @@ from app.core.schemas import Page
 from app.leases.dependencies import get_lease_or_404
 from app.leases.models import Lease
 
-from . import models, schemas
+from . import models, schemas, tasks
 from .dependencies import get_bill_or_404
 from .services import BillService
 
@@ -19,9 +19,7 @@ bill_router = APIRouter(prefix="/bills", tags=["bills"])
 lease_bill_router = APIRouter(prefix="/leases", tags=["bills"])
 
 
-@lease_bill_router.get(
-    "/{lease_id}/bills", response_model=Page[schemas.BillRead]
-)
+@lease_bill_router.get("/{lease_id}/bills", response_model=Page[schemas.BillRead])
 def list_lease_bills(
     lease: Lease = Depends(get_lease_or_404),
     pagination: PaginationParams = Depends(),
@@ -56,7 +54,10 @@ def list_bills(
     "", response_model=schemas.BillRead, status_code=status.HTTP_201_CREATED
 )
 def create_bill(payload: schemas.BillCreate, db: Session = Depends(get_db)):
-    return BillService(db).create(payload)
+    bill = BillService(db).create(payload)
+    # The bill is committed; render its receipt and email the tenant off-request.
+    tasks.enqueue_bill_receipt_and_notification(bill.id)
+    return bill
 
 
 @bill_router.get("/{bill_id}", response_model=schemas.BillRead)

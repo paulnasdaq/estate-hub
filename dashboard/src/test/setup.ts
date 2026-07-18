@@ -14,6 +14,19 @@ globalThis.ResizeObserver ??= class {
   unobserve() {}
   disconnect() {}
 };
+// The sidebar's responsive hook (useIsMobile) reads window.matchMedia, which
+// jsdom doesn't implement. Stub it as a non-matching, no-op media query.
+window.matchMedia ??= (query: string) =>
+  ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => false,
+  }) as unknown as MediaQueryList;
 
 // Runs before every test file (configured as setupFiles in vite.config.ts),
 // mirroring conftest.py: start the mock API, reset handlers between tests so

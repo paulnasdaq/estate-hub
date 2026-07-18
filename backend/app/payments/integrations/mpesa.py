@@ -78,7 +78,7 @@ class MPesaService:
         ttl = max(expires_in - _EXPIRY_SAFETY_MARGIN_SECONDS, 1)
         self._redis.set(_TOKEN_CACHE_KEY, token, ex=ttl)
         return token
-    
+
     def send_stk(self, payment_request_id: uuid.UUID) -> dict[str, Any]:
         """Send an STK push to collect a payment request's bill from the tenant.
 
@@ -93,9 +93,7 @@ class MPesaService:
         account = str(payment_request_id)
 
         if not settings.mpesa_short_code or not settings.mpesa_passkey:
-            raise MPesaConfigError(
-                "M-Pesa short code and passkey are not configured"
-            )
+            raise MPesaConfigError("M-Pesa short code and passkey are not configured")
         if not settings.mpesa_callback_url:
             raise MPesaConfigError("M-Pesa callback URL is not configured")
 

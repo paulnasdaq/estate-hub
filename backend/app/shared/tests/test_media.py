@@ -107,12 +107,8 @@ def test_create_media_rejects_missing_object(
 
 def test_list_media_for_entity(client: TestClient) -> None:
     entity_id = str(uuid.uuid4())
-    _create_media(
-        client, entity_id=entity_id, storage_key="a", display_order=2
-    )
-    _create_media(
-        client, entity_id=entity_id, storage_key="b", display_order=1
-    )
+    _create_media(client, entity_id=entity_id, storage_key="a", display_order=2)
+    _create_media(client, entity_id=entity_id, storage_key="b", display_order=1)
     # A different entity's media must not leak into the results.
     _create_media(client, entity_id=str(uuid.uuid4()), storage_key="c")
 

@@ -1,16 +1,52 @@
 import createClient, { type Middleware } from "openapi-fetch";
 import { config } from "@/core/config";
 import type { paths } from "./schema";
-import { getAccessToken } from "./token";
+import { clearAccessToken, getAccessToken } from "./token";
+import { refreshAccessToken } from "./refresh";
 
-// Attaches the bearer token (when present) to every outgoing request.
+// A 401 on an auth endpoint is meaningful (bad credentials / expired refresh) and
+// must not trigger a refresh-retry loop.
+function isAuthRequest(url: string): boolean {
+  return url.includes("/api/v1/auth/");
+}
+
+// A Request's body is consumed once it's fetched, so to retry after refreshing we
+// stash a pre-send clone keyed by the original request.
+const retryClones = new WeakMap<Request, Request>();
+
+// Attaches the bearer token to every request, and transparently recovers from an
+// expired access token: on a 401, refresh once (shared across concurrent calls)
+// and replay the original request with the new token.
 const authMiddleware: Middleware = {
   onRequest({ request }) {
     const token = getAccessToken();
     if (token) {
       request.headers.set("Authorization", `Bearer ${token}`);
     }
+    try {
+      retryClones.set(request, request.clone());
+    } catch {
+      // A body that can't be cloned simply won't be auto-retried.
+    }
     return request;
+  },
+
+  async onResponse({ request, response }) {
+    if (response.status !== 401 || isAuthRequest(request.url)) {
+      return response;
+    }
+    const refreshed = await refreshAccessToken();
+    if (!refreshed) {
+      clearAccessToken();
+      return response;
+    }
+    const retry = retryClones.get(request);
+    if (!retry) {
+      return response;
+    }
+    retry.headers.set("Authorization", `Bearer ${getAccessToken()}`);
+    // Replay via the raw fetch so it isn't re-intercepted (no recursion).
+    return globalThis.fetch(retry);
   },
 };
 

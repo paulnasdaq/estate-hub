@@ -5,7 +5,7 @@ from app.api import api_router
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging
-from app.core.middleware import RequestIdMiddleware
+from app.core.middleware import RequestIdMiddleware, add_cors_middleware
 
 # Configure logging before anything emits records.
 configure_logging(settings.log_level)
@@ -13,6 +13,9 @@ configure_logging(settings.log_level)
 # Database schema is managed by Alembic migrations; run `uv run alembic upgrade head`.
 app = FastAPI(title=settings.app_name)
 app.add_middleware(RequestIdMiddleware)
+# Added last so CORS is the outermost middleware and answers preflight requests
+# before anything else runs. No-op unless cors_origins is configured.
+add_cors_middleware(app)
 register_exception_handlers(app)
 app.include_router(api_router)
 

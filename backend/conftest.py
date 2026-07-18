@@ -1,3 +1,5 @@
+import io
+import uuid
 from collections.abc import Generator
 
 import pytest
@@ -8,6 +10,8 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app import registry  # noqa: F401  (registers all models on Base.metadata)
+from app.auth.dependencies import get_current_user
+from app.auth.models import User
 from app.core.celery_app import celery_app
 from app.core.database import Base, get_db
 from app.core.s3 import get_s3_client
@@ -29,6 +33,8 @@ class FakeS3Client:
     def __init__(self) -> None:
         self.exists_result = True
         self.deleted: list[str] = []
+        # In-memory object store: key -> body bytes, populated by put_object.
+        self.objects: dict[str, bytes] = {}
 
     def head_object(self, Bucket: str, Key: str) -> dict:  # noqa: N803
         if not self.exists_result:
@@ -37,12 +43,28 @@ class FakeS3Client:
             )
         return {}
 
+    def put_object(  # noqa: N803
+        self, Bucket: str, Key: str, Body: bytes, **kwargs: object
+    ) -> dict:
+        self.objects[Key] = Body
+        return {}
+
+    def get_object(self, Bucket: str, Key: str) -> dict:  # noqa: N803
+        if Key not in self.objects:
+            raise ClientError(
+                {"Error": {"Code": "NoSuchKey", "Message": "Not Found"}}, "GetObject"
+            )
+        return {"Body": io.BytesIO(self.objects[Key])}
+
     def delete_object(self, Bucket: str, Key: str) -> dict:  # noqa: N803
         self.deleted.append(Key)
         return {}
 
     def generate_presigned_url(
-        self, ClientMethod: str, Params: dict, ExpiresIn: int  # noqa: N803
+        self,
+        ClientMethod: str,
+        Params: dict,
+        ExpiresIn: int,  # noqa: N803
     ) -> str:
         return (
             f"https://s3.test/{Params['Bucket']}/{Params['Key']}"
@@ -74,10 +96,16 @@ def db_session() -> Generator[Session, None, None]:
 
 
 @pytest.fixture
-def client(
+def anon_client(
     db_session: Session, s3_stub: FakeS3Client
 ) -> Generator[TestClient, None, None]:
-    """A TestClient whose requests use the test database and a fake S3."""
+    """A TestClient with no authenticated user.
+
+    Requests use the test database and a fake S3, but the real
+    ``get_current_user`` dependency runs — so requests to protected routes are
+    rejected unless they carry a valid token. Use this for auth flows and to
+    assert that protection is enforced.
+    """
 
     def override_get_db() -> Generator[Session, None, None]:
         yield db_session
@@ -87,3 +115,25 @@ def client(
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def client(anon_client: TestClient) -> Generator[TestClient, None, None]:
+    """An authenticated TestClient: protected routes see a valid current user.
+
+    Overrides ``get_current_user`` to return a stand-in user so the bulk of the
+    suite (which exercises product routes) doesn't need to log in. The user is
+    transient — no route reads its fields yet; it only satisfies the dependency.
+    """
+
+    def current_user() -> User:
+        return User(
+            id=uuid.UUID("00000000-0000-0000-0000-0000000000aa"),
+            first_name="Test",
+            last_name="User",
+            email="authenticated@example.com",
+        )
+
+    app.dependency_overrides[get_current_user] = current_user
+    yield anon_client
+    app.dependency_overrides.pop(get_current_user, None)

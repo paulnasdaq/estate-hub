@@ -36,9 +36,7 @@ class PaymentRequest(Base):
         ),
     )
 
-    bill_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, ForeignKey("bills.id"), index=True
-    )
+    bill_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("bills.id"), index=True)
     # A Python enum stored as a plain string (VARCHAR) rather than a native DB
     # enum, matching the convention used elsewhere in the app.
     status: Mapped[PaymentStatus] = mapped_column(
@@ -51,9 +49,7 @@ class PaymentRequest(Base):
     )
     # The raw provider response (e.g. Daraja's STK callback payload), stored as
     # JSON for auditing and troubleshooting. Null until a response is received.
-    response: Mapped[dict[str, Any] | None] = mapped_column(
-        JSON, default=None
-    )
+    response: Mapped[dict[str, Any] | None] = mapped_column(JSON, default=None)
 
     payments: Mapped[list["Payment"]] = relationship(
         back_populates="payment_request", cascade="all, delete-orphan"

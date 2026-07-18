@@ -28,6 +28,12 @@ import {
 } from "@/features/leases";
 import { billsRoute, newBillRoute, billDetailRoute } from "@/features/bills";
 import { paymentsRoute } from "@/features/payments";
+import {
+  loginRoute,
+  activateRoute,
+  forgotPasswordRoute,
+  resetPasswordRoute,
+} from "@/features/auth";
 
 // Aggregate every feature's routes under the root (mirrors backend app/api.py).
 // Each feature owns its route definitions and exposes them through its barrel.
@@ -53,6 +59,10 @@ const routeTree = rootRoute.addChildren([
   newBillRoute,
   billDetailRoute,
   paymentsRoute,
+  loginRoute,
+  activateRoute,
+  forgotPasswordRoute,
+  resetPasswordRoute,
 ]);
 
 export const router = createRouter({ routeTree });
