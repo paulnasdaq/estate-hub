@@ -1,5 +1,7 @@
 from fastapi.testclient import TestClient
 
+from conftest import FakeS3Client
+
 BASE = "/api/v1/organizations"
 
 
@@ -20,6 +22,47 @@ def test_create_organization(client: TestClient) -> None:
     assert body["deleted_at"] is None
     assert body["id"]
     assert body["created_at"]
+    # Contact fields are optional and default to null when omitted.
+    assert body["email"] is None
+    assert body["phone"] is None
+    assert body["website"] is None
+
+
+def test_create_organization_with_contact_fields(client: TestClient) -> None:
+    resp = client.post(
+        BASE,
+        json={
+            "name": "Acme Properties",
+            "email": "hello@acme.com",
+            "phone": "+254700000000",
+            "website": "https://acme.test",
+        },
+    )
+    assert resp.status_code == 201
+    body = resp.json()
+    assert body["email"] == "hello@acme.com"
+    assert body["phone"] == "+254700000000"
+    assert body["website"] == "https://acme.test"
+
+
+def test_create_organization_rejects_invalid_email(client: TestClient) -> None:
+    resp = client.post(BASE, json={"name": "Acme", "email": "not-an-email"})
+    assert resp.status_code == 422
+    assert resp.json()["error"]["code"] == "validation_error"
+
+
+def test_update_organization_contact_fields(client: TestClient) -> None:
+    org_id = _create(client)
+    resp = client.patch(
+        f"{BASE}/{org_id}",
+        json={"phone": "+254711111111", "website": "https://acme.test"},
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    # Untouched name is preserved; the patched fields are updated.
+    assert body["name"] == "Acme"
+    assert body["phone"] == "+254711111111"
+    assert body["website"] == "https://acme.test"
 
 
 def test_get_organization(client: TestClient) -> None:
@@ -74,6 +117,89 @@ def test_validation_error_envelope(client: TestClient) -> None:
     resp = client.post(BASE, json={})
     assert resp.status_code == 422
     assert resp.json()["error"]["code"] == "validation_error"
+
+
+def test_logo_presign_returns_scoped_key(client: TestClient) -> None:
+    org_id = _create(client)
+    resp = client.post(
+        f"{BASE}/{org_id}/logo/presigns",
+        json={"filename": "logo.png", "content_type": "image/png"},
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["storage_key"] == f"organizations/{org_id}/logo/logo.png"
+    assert body["upload_url"]
+
+
+def test_logo_presign_rejects_non_image(client: TestClient) -> None:
+    org_id = _create(client)
+    resp = client.post(
+        f"{BASE}/{org_id}/logo/presigns",
+        json={"filename": "logo.pdf", "content_type": "application/pdf"},
+    )
+    assert resp.status_code == 422
+    assert resp.json()["error"]["code"] == "invalid_organization_logo"
+
+
+def test_set_logo_records_public_url(client: TestClient) -> None:
+    org_id = _create(client)
+    key = f"organizations/{org_id}/logo/logo.png"
+    resp = client.put(f"{BASE}/{org_id}/logo", json={"storage_key": key})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["logo_url"].endswith(key)
+    # The URL is now returned when reading the organization.
+    assert client.get(f"{BASE}/{org_id}").json()["logo_url"] == body["logo_url"]
+
+
+def test_set_logo_rejects_key_outside_organization(client: TestClient) -> None:
+    org_id = _create(client)
+    other = _create(client)
+    resp = client.put(
+        f"{BASE}/{org_id}/logo",
+        json={"storage_key": f"organizations/{other}/logo/logo.png"},
+    )
+    assert resp.status_code == 422
+    assert resp.json()["error"]["code"] == "invalid_organization_logo"
+
+
+def test_set_logo_rejects_missing_object(
+    client: TestClient, s3_stub: FakeS3Client
+) -> None:
+    org_id = _create(client)
+    s3_stub.exists_result = False
+    resp = client.put(
+        f"{BASE}/{org_id}/logo",
+        json={"storage_key": f"organizations/{org_id}/logo/logo.png"},
+    )
+    assert resp.status_code == 422
+    assert resp.json()["error"]["code"] == "media_file_missing"
+
+
+def test_replacing_logo_deletes_previous_object(
+    client: TestClient, s3_stub: FakeS3Client
+) -> None:
+    org_id = _create(client)
+    first = f"organizations/{org_id}/logo/old.png"
+    second = f"organizations/{org_id}/logo/new.png"
+    client.put(f"{BASE}/{org_id}/logo", json={"storage_key": first})
+    client.put(f"{BASE}/{org_id}/logo", json={"storage_key": second})
+    # The superseded object was removed from storage.
+    assert s3_stub.deleted == [first]
+    assert client.get(f"{BASE}/{org_id}").json()["logo_url"].endswith(second)
+
+
+def test_delete_logo_clears_url_and_object(
+    client: TestClient, s3_stub: FakeS3Client
+) -> None:
+    org_id = _create(client)
+    key = f"organizations/{org_id}/logo/logo.png"
+    client.put(f"{BASE}/{org_id}/logo", json={"storage_key": key})
+    resp = client.delete(f"{BASE}/{org_id}/logo")
+    assert resp.status_code == 200
+    assert resp.json()["logo_url"] is None
+    assert s3_stub.deleted == [key]
+    assert client.get(f"{BASE}/{org_id}").json()["logo_url"] is None
 
 
 def test_request_id_header(client: TestClient) -> None:

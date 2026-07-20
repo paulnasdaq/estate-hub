@@ -47,6 +47,10 @@ describe("PropertyForm", () => {
       await screen.findByRole("option", { name: "Acme Properties" }),
     );
 
+    // Pick a category from the Select.
+    await user.click(screen.getByRole("combobox", { name: /category/i }));
+    await user.click(await screen.findByRole("option", { name: "Residential" }));
+
     // Coordinates come from clicking the map, not text inputs; the stubbed
     // picker reports a fixed point.
     await user.click(screen.getByRole("button", { name: /pick on map/i }));
@@ -56,6 +60,7 @@ describe("PropertyForm", () => {
     expect(posted).toEqual({
       name: "Birchwood Flats",
       organization_id: "11111111-1111-1111-1111-111111111111",
+      category: "residential",
       lat: 45.52,
       lng: -122.68,
     });
@@ -149,6 +154,7 @@ describe("PropertyForm", () => {
       created_at: "2026-01-01T00:00:00Z",
       name: "Maple Court",
       organization_id: "11111111-1111-1111-1111-111111111111",
+      category: "commercial" as const,
       lat: 45.52,
       lng: -122.68,
       unit_count: 0,
@@ -180,9 +186,11 @@ describe("PropertyForm", () => {
 
     await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
     expect(patchedId).toBe("abc-123");
+    // The prefilled category round-trips even though only the name changed.
     expect(patched).toEqual({
       name: "Maple Court Renamed",
       organization_id: "11111111-1111-1111-1111-111111111111",
+      category: "commercial",
       lat: 45.52,
       lng: -122.68,
     });

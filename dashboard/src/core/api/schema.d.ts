@@ -213,6 +213,41 @@ export interface paths {
         patch: operations["update_organization_api_v1_organizations__org_id__patch"];
         trace?: never;
     };
+    "/api/v1/organizations/{org_id}/logo/presigns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Organization Logo Presign */
+        post: operations["create_organization_logo_presign_api_v1_organizations__org_id__logo_presigns_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/organizations/{org_id}/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Organization Logo */
+        put: operations["set_organization_logo_api_v1_organizations__org_id__logo_put"];
+        post?: never;
+        /** Delete Organization Logo */
+        delete: operations["delete_organization_logo_api_v1_organizations__org_id__logo_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users": {
         parameters: {
             query?: never;
@@ -954,6 +989,17 @@ export interface components {
         OrganizationCreate: {
             /** Name */
             name: string;
+            /** Email */
+            email?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Website */
+            website?: string | null;
+        };
+        /** OrganizationLogoSet */
+        OrganizationLogoSet: {
+            /** Storage Key */
+            storage_key: string;
         };
         /** OrganizationRead */
         OrganizationRead: {
@@ -971,11 +1017,25 @@ export interface components {
             deleted_at?: string | null;
             /** Name */
             name: string;
+            /** Email */
+            email?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Website */
+            website?: string | null;
+            /** Logo Url */
+            logo_url?: string | null;
         };
         /** OrganizationUpdate */
         OrganizationUpdate: {
             /** Name */
             name?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Website */
+            website?: string | null;
         };
         /** Page[BillRead] */
         Page_BillRead_: {
@@ -1141,6 +1201,12 @@ export interface components {
          * @enum {string}
          */
         PaymentType: "prepaid" | "postpaid";
+        /**
+         * PropertyCategory
+         * @description How a property is used.
+         * @enum {string}
+         */
+        PropertyCategory: "commercial" | "residential";
         /** PropertyCreate */
         PropertyCreate: {
             /** Name */
@@ -1149,6 +1215,7 @@ export interface components {
             lng: number;
             /** Lat */
             lat: number;
+            category?: components["schemas"]["PropertyCategory"] | null;
             /**
              * Organization Id
              * Format: uuid
@@ -1175,6 +1242,7 @@ export interface components {
             lng: number;
             /** Lat */
             lat: number;
+            category: components["schemas"]["PropertyCategory"] | null;
             /**
              * Organization Id
              * Format: uuid
@@ -1193,6 +1261,7 @@ export interface components {
             lng?: number | null;
             /** Lat */
             lat?: number | null;
+            category?: components["schemas"]["PropertyCategory"] | null;
             /** Organization Id */
             organization_id?: string | null;
         };
@@ -1724,6 +1793,107 @@ export interface operations {
                 "application/json": components["schemas"]["OrganizationUpdate"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrganizationRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_organization_logo_presign_api_v1_organizations__org_id__logo_presigns_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MediaPresignRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaPresignResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_organization_logo_api_v1_organizations__org_id__logo_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrganizationLogoSet"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrganizationRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_organization_logo_api_v1_organizations__org_id__logo_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

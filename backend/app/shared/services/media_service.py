@@ -68,7 +68,7 @@ class MediaService:
         )
         return items, total or 0
 
-    def _object_exists(self, key: str) -> bool:
+    def object_exists(self, key: str) -> bool:
         """Whether an object is present in the bucket at ``key``.
 
         A missing object yields ``False``; other client errors (e.g. denied
@@ -81,6 +81,15 @@ class MediaService:
             if exc.response.get("Error", {}).get("Code") in _NOT_FOUND_CODES:
                 return False
             raise
+
+    def delete_object(self, key: str) -> None:
+        """Remove an object from the bucket (no-op semantics if already gone)."""
+        self.s3.delete_object(Bucket=self.bucket, Key=key)
+
+    def key_from_public_url(self, url: str) -> str:
+        """Recover the storage key from a public URL produced by ``public_url``."""
+        base = settings.media_public_base_url.rstrip("/") + "/"
+        return url.removeprefix(base)
 
     @staticmethod
     def storage_category(content_type: str) -> str:
@@ -124,7 +133,7 @@ class MediaService:
     def create(self, payload: schemas.MediaCreate) -> models.Media:
         # The object must already have been uploaded (e.g. via a presigned URL)
         # before we record it, so we never store a dangling reference.
-        if not self._object_exists(payload.storage_key):
+        if not self.object_exists(payload.storage_key):
             raise MediaFileNotFoundError(payload.storage_key)
         media = models.Media(**payload.model_dump())
         self.db.add(media)
@@ -145,6 +154,6 @@ class MediaService:
         The object is deleted first: if storage removal fails the record is left
         intact, avoiding a soft-deleted row whose bytes still linger in S3.
         """
-        self.s3.delete_object(Bucket=self.bucket, Key=media.storage_key)
+        self.delete_object(media.storage_key)
         media.deleted_at = utcnow()
         self.db.commit()

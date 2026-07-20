@@ -7,6 +7,7 @@ import { useOrganizations } from "@/features/organizations";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProperty } from "../api/properties.queries";
+import { propertyCategoryLabel } from "../types";
 import { EntityMedia } from "./entity-media";
 
 // Lazy-loaded so the sizeable mapbox-gl bundle is only fetched on this page,
@@ -87,6 +88,10 @@ export function PropertyDetailsPage({ propertyId }: { propertyId: string }) {
               <Field
                 label="Organization"
                 value={organizationName ?? property.organization_id}
+              />
+              <Field
+                label="Category"
+                value={propertyCategoryLabel(property.category)}
               />
               <Field label="Units" value={property.unit_count} />
               <Field

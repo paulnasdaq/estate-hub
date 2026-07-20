@@ -28,7 +28,7 @@ import {
   useUpdateProperty,
 } from "../api/properties.queries";
 import { propertyFormSchema, type PropertyFormValues } from "../schemas";
-import type { Property } from "../types";
+import { PROPERTY_CATEGORIES, type Property } from "../types";
 import { MediaPicker } from "./media-picker";
 import { useStagedMedia } from "./use-staged-media";
 
@@ -79,10 +79,11 @@ export function PropertyForm({
       ? {
           name: property.name,
           organization_id: property.organization_id,
+          category: property.category ?? "",
           lat: String(property.lat),
           lng: String(property.lng),
         }
-      : { name: "", organization_id: "", lat: "", lng: "" },
+      : { name: "", organization_id: "", category: "", lat: "", lng: "" },
   });
 
   // The lat/lng form fields have no inputs; the map is the only way to set
@@ -107,6 +108,8 @@ export function PropertyForm({
     const payload = {
       name: values.name,
       organization_id: values.organization_id,
+      // "" is the unset sentinel from the Select; send null so the field clears.
+      category: values.category === "" ? null : values.category,
       lat: Number(values.lat),
       lng: Number(values.lng),
     };
@@ -173,6 +176,31 @@ export function PropertyForm({
                   {organizations.data?.items.map((org) => (
                     <SelectItem key={org.id} value={org.id}>
                       {org.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="category"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Category</FormLabel>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {PROPERTY_CATEGORIES.map((category) => (
+                    <SelectItem key={category.value} value={category.value}>
+                      {category.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

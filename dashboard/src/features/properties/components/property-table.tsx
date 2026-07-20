@@ -9,7 +9,7 @@ import {
 } from "@tanstack/react-table";
 import { useState } from "react";
 
-import type { Property } from "../types";
+import { propertyCategoryLabel, type Property } from "../types";
 
 const columnHelper = createColumnHelper<Property>();
 
@@ -25,6 +25,10 @@ const columns = [
         {info.getValue()}
       </Link>
     ),
+  }),
+  columnHelper.accessor("category", {
+    header: "Category",
+    cell: (info) => propertyCategoryLabel(info.getValue()),
   }),
   columnHelper.accessor("unit_count", { header: "Units" }),
   columnHelper.accessor("occupied_unit_count", {

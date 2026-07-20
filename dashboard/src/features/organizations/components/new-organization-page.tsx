@@ -22,7 +22,7 @@ export function NewOrganizationPage() {
         </h1>
       </div>
 
-      <OrganizationForm onCreated={goToList} onCancel={goToList} />
+      <OrganizationForm onSaved={goToList} onCancel={goToList} />
     </div>
   );
 }

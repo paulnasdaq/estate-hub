@@ -17,6 +17,9 @@ const coordinateField = (label: string, min: number, max: number) =>
 export const propertyFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   organization_id: z.string().min(1, "Organization is required"),
+  // Category is optional; "" is the "unset" sentinel the Select starts on and
+  // is mapped back to null on submit.
+  category: z.union([z.enum(["commercial", "residential"]), z.literal("")]),
   lat: coordinateField("Latitude", -90, 90),
   lng: coordinateField("Longitude", -180, 180),
 });

@@ -4,3 +4,4 @@ import type { components } from "@/core/api/schema";
 // backend (regenerate with `npm run gen:api`).
 export type Organization = components["schemas"]["OrganizationRead"];
 export type OrganizationCreate = components["schemas"]["OrganizationCreate"];
+export type OrganizationUpdate = components["schemas"]["OrganizationUpdate"];

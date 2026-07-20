@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import {
   createColumnHelper,
   flexRender,
@@ -13,7 +14,18 @@ import type { Organization } from "../types";
 const columnHelper = createColumnHelper<Organization>();
 
 const columns = [
-  columnHelper.accessor("name", { header: "Name" }),
+  columnHelper.accessor("name", {
+    header: "Name",
+    cell: (info) => (
+      <Link
+        to="/organizations/$orgId"
+        params={{ orgId: info.row.original.id }}
+        className="font-medium text-primary hover:underline"
+      >
+        {info.getValue()}
+      </Link>
+    ),
+  }),
   columnHelper.accessor("created_at", {
     header: "Created",
     cell: (info) => new Date(info.getValue()).toLocaleDateString(),

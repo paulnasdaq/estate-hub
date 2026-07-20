@@ -15,6 +15,8 @@ import {
 import {
   organizationsRoute,
   newOrganizationRoute,
+  organizationDetailRoute,
+  organizationEditRoute,
 } from "@/features/organizations";
 import {
   peopleRoute,
@@ -49,6 +51,8 @@ const routeTree = rootRoute.addChildren([
   propertyUnitEditRoute,
   organizationsRoute,
   newOrganizationRoute,
+  organizationDetailRoute,
+  organizationEditRoute,
   peopleRoute,
   newPersonRoute,
   personDetailRoute,

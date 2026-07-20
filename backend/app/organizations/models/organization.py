@@ -14,6 +14,12 @@ class Organization(Base):
     __tablename__ = "organizations"
 
     name: Mapped[str] = mapped_column(index=True)
+    email: Mapped[str | None] = mapped_column(default=None)
+    phone: Mapped[str | None] = mapped_column(default=None)
+    website: Mapped[str | None] = mapped_column(default=None)
+    # Public URL of the organization's logo in the media bucket (R2). Set only
+    # via the logo endpoints, which upload the object and record its URL here.
+    logo_url: Mapped[str | None] = mapped_column(default=None)
 
     user_accounts: Mapped[list["UserAccount"]] = relationship(
         back_populates="organization"

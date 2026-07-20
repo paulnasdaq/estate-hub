@@ -1,11 +1,19 @@
 import uuid
+from enum import StrEnum
 
-from sqlalchemy import ForeignKey, Index, Uuid, func, select, text
+from sqlalchemy import Enum, ForeignKey, Index, Uuid, func, select, text
 from sqlalchemy.orm import Mapped, column_property, mapped_column
 
 from app.core.database import Base
 from app.leases.models.lease import Lease
 from app.properties.models.unit import Unit
+
+
+class PropertyCategory(StrEnum):
+    """How a property is used."""
+
+    COMMERCIAL = "commercial"
+    RESIDENTIAL = "residential"
 
 # A property name is unique within its organization. Enforced by a partial
 # unique index over active rows so a soft-deleted name can be reused.
@@ -34,6 +42,17 @@ class Property(Base):
     name: Mapped[str] = mapped_column(index=True)
     lng: Mapped[float]
     lat: Mapped[float]
+    # A Python enum stored as a plain string (VARCHAR), not a native DB enum
+    # type (mirrors the lease-term enums). Nullable so existing rows and
+    # unclassified properties are allowed.
+    category: Mapped[PropertyCategory | None] = mapped_column(
+        Enum(
+            PropertyCategory,
+            native_enum=False,
+            values_callable=lambda enum: [member.value for member in enum],
+        ),
+        default=None,
+    )
     organization_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("organizations.id"), index=True
     )

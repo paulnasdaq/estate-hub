@@ -1,3 +1,4 @@
+import { http as rawHttp, HttpResponse } from "msw";
 import { createOpenApiHttp } from "openapi-msw";
 
 import { config } from "@/core/config";
@@ -31,6 +32,17 @@ export const handlers = [
     }),
   ),
 
+  http.get("/api/v1/organizations/{org_id}", ({ params, response }) =>
+    response(200).json({
+      id: params.org_id,
+      created_at: now,
+      name: "Acme Properties",
+      email: "hello@acme.com",
+      phone: "+254700000000",
+      website: "https://acme.com",
+    }),
+  ),
+
   http.post("/api/v1/organizations", async ({ request, response }) => {
     const body = await request.json();
     return response(201).json({
@@ -39,6 +51,65 @@ export const handlers = [
       ...body,
     });
   }),
+
+  http.patch(
+    "/api/v1/organizations/{org_id}",
+    async ({ params, request, response }) => {
+      const body = await request.json();
+      return response(200).json({
+        id: params.org_id,
+        created_at: now,
+        name: "Acme Properties",
+        ...body,
+      });
+    },
+  ),
+
+  http.delete("/api/v1/organizations/{org_id}", ({ response }) =>
+    response(204).empty(),
+  ),
+
+  http.post(
+    "/api/v1/organizations/{org_id}/logo/presigns",
+    async ({ params, request, response }) => {
+      const body = await request.json();
+      const key = `organizations/${params.org_id}/logo/${body.filename}`;
+      return response(200).json({
+        storage_key: key,
+        upload_url: `https://s3.test/media/${key}?upload=1`,
+      });
+    },
+  ),
+
+  // The presigned PUT goes straight to storage (not our API); stub it (with the
+  // untyped msw http, since it's outside our OpenAPI schema) so the upload step
+  // resolves in tests.
+  rawHttp.put(
+    "https://s3.test/*",
+    () => new HttpResponse(null, { status: 200 }),
+  ),
+
+  http.put(
+    "/api/v1/organizations/{org_id}/logo",
+    async ({ params, request, response }) => {
+      const body = await request.json();
+      return response(200).json({
+        id: params.org_id,
+        created_at: now,
+        name: "Acme Properties",
+        logo_url: `https://cdn.test/${body.storage_key}`,
+      });
+    },
+  ),
+
+  http.delete("/api/v1/organizations/{org_id}/logo", ({ params, response }) =>
+    response(200).json({
+      id: params.org_id,
+      created_at: now,
+      name: "Acme Properties",
+      logo_url: null,
+    }),
+  ),
 
   http.get("/api/v1/properties", ({ response }) =>
     response(200).json({
@@ -49,6 +120,7 @@ export const handlers = [
           name: "Maple Court",
           lat: 45.52,
           lng: -122.68,
+          category: "residential",
           organization_id: SAMPLE_ORG_ID,
           unit_count: 3,
           occupied_unit_count: 2,
@@ -67,6 +139,7 @@ export const handlers = [
       name: "Maple Court",
       lat: 45.52,
       lng: -122.68,
+      category: "residential",
       organization_id: SAMPLE_ORG_ID,
       unit_count: 3,
       occupied_unit_count: 2,
@@ -78,6 +151,8 @@ export const handlers = [
     return response(201).json({
       id: "33333333-3333-3333-3333-333333333333",
       created_at: now,
+      // Unset unless the request body provides one (spread below).
+      category: null,
       // A brand-new property has no units yet.
       unit_count: 0,
       occupied_unit_count: 0,
